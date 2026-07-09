@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>WAD Lab Record - Exercise 1</title>
+<style>
+@page { size: A4; margin: 18mm 16mm; }
+body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.5; }
+h1.cover-title { font-size: 28px; text-align: center; margin-top: 140px; }
+h1.cover-sub { font-size: 17px; text-align: center; font-weight: normal; color: #444; }
+.cover { page-break-after: always; }
+.cover-block { text-align: center; margin-top: 240px; font-size: 14px; color: #333; }
+h2.section-title {
+  font-size: 20px;
+  background-color: #1b2a4a;
+  color: #fff;
+  padding: 9px 16px;
+  margin-top: 0;
+  page-break-after: avoid;
+}
+h3.sub-title {
+  font-size: 16px;
+  color: #1b2a4a;
+  border-bottom: 2px solid #f4b400;
+  padding-bottom: 4px;
+  margin-top: 26px;
+  page-break-after: avoid;
+  page-break-before: always;
+}
+h3.sub-title.first { page-break-before: avoid; }
+
+.probdesc {
+  background-color: #f7f8fb;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 16px 20px;
+  font-size: 12.5px;
+}
+.pd-title { font-size: 15px; font-weight: bold; color: #1b2a4a; margin-bottom: 10px; }
+.pd-h2 { font-size: 14.5px; font-weight: bold; color: #1b2a4a; margin-top: 16px; margin-bottom: 4px; page-break-after: avoid; }
+.pd-h3 { font-size: 13.5px; font-weight: bold; color: #2a3d66; margin-left: 12px; margin-top: 12px; margin-bottom: 2px; page-break-after: avoid; }
+.pd-h4 { font-size: 12.5px; font-weight: bold; color: #444; margin-left: 24px; margin-top: 8px; margin-bottom: 2px; page-break-after: avoid; }
+.pd-label { font-size: 12px; font-weight: bold; font-style: italic; color: #6b6b6b; margin-left: 24px; margin-top: 6px; page-break-after: avoid; }
+.pd-para { margin: 2px 0 2px 36px; }
+.pd-standalone { margin-left: 12px; font-style: italic; color: #333; }
+ul.pd-list { margin: 2px 0 2px 52px; padding-left: 16px; }
+ul.pd-list li { margin-bottom: 2px; }
+
+.codefile { margin-top: 16px; }
+.codefile-name {
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  background-color: #1b2a4a;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px 4px 0 0;
+  page-break-after: avoid;
+  page-break-inside: avoid;
+}
+pre.code {
+  font-family: 'Consolas', monospace;
+  font-size: 10.5px;
+  line-height: 1.45;
+  background-color: #f4f4f4;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+}
+.shot { margin-top: 20px; }
+.shot-caption {
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: #1b2a4a;
+  margin-bottom: 4px;
+  page-break-after: avoid;
+}
+.shot img {
+  width: 100%;
+  border: 1px solid #999;
+  border-radius: 4px;
+  display: block;
+}
+ul.outcomes { font-size: 14px; padding-left: 22px; }
+ul.outcomes li { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+<h1 class="cover-title">Web Application Development Laboratory</h1>
+<h1 class="cover-sub">Exercise 1: College Symposium Website using HTML</h1>
+<div class="cover-block">
+TechNova 2026 &ndash; College Symposium Website
+</div>
+</div>
+
+<h2 class="section-title">Exercise 1 &ndash; College Symposium Website using HTML</h2>
+
+<h3 class="sub-title first">1. Problem Description</h3>
+<div class="probdesc">
+<div class="pd-title">Mini Project: College Symposium Website using HTML alone</div>
+<div class="pd-label">Scenario</div>
+<ul class="pd-list"><li>Your college is organizing a national-level technical symposium called "TechNova 2026". The organizing committee wants a website to provide information about the event, showcase competitions, display schedules, and allow students to register online.</li><li>Design and develop a website using only HTML and CSS.</li></ul>
+<div class="pd-h2">Website Structure</div>
+<div class="pd-h3">Page 1: Home (index.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Welcome visitors and provide an overview of the symposium.</p>
+<div class="pd-label">Content</div>
+<ul class="pd-list"><li>College logo</li><li>Symposium banner image</li><li>Symposium name: TechNova 2026</li><li>Theme of the event</li><li>Date and venue</li><li>Brief introduction</li><li>Navigation menu to all pages</li><li>Highlights section</li><li>500+ Participants</li><li>15 Events</li><li>Cash Prizes</li><li>Industry Experts</li></ul>
+<div class="pd-h3">Page 2: About Symposium (about.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Provide detailed information about the event.</p>
+<div class="pd-label">Content</div>
+<ul class="pd-list"><li>Symposium objectives</li><li>Event vision and mission</li><li>Organizing department</li><li>Why students should participate</li><li>Benefits of participation</li></ul>
+<div class="pd-h3">Page 3: Technical Events (technical.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Display all technical competitions.</p>
+<div class="pd-label">Content</div>
+<div class="pd-h4">Event 1: Paper Presentation</div>
+<p class="pd-para pd-standalone">Present innovative research ideas.</p>
+<div class="pd-h4">Event 2: Web Design Contest</div>
+<p class="pd-para pd-standalone">Build attractive websites.</p>
+<div class="pd-h4">Event 3: Coding Challenge</div>
+<p class="pd-para pd-standalone">Solve programming problems.</p>
+<div class="pd-h4">Event 4: Project Expo</div>
+<p class="pd-para pd-standalone">Showcase innovative projects.</p>
+<p class="pd-para pd-standalone">For each event:</p>
+<p class="pd-para pd-standalone">Event image</p>
+<p class="pd-para pd-standalone">Description</p>
+<p class="pd-para pd-standalone">Rules</p>
+<p class="pd-para pd-standalone">Prize details</p>
+<div class="pd-h3">Page 4: Non-Technical Events (nontechnical.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Display entertainment and fun events.</p>
+<div class="pd-label">Content</div>
+<div class="pd-h4">Event 1: Photography</div>
+<div class="pd-h4">Event 2: Quiz Competition</div>
+<div class="pd-h4">Event 3: Treasure Hunt</div>
+<div class="pd-h4">Event 4: Gaming Tournament</div>
+<p class="pd-para pd-standalone">For each event:</p>
+<p class="pd-para pd-standalone">Description</p>
+<p class="pd-para pd-standalone">Rules</p>
+<p class="pd-para pd-standalone">Registration fee</p>
+<p class="pd-para pd-standalone">Prize information</p>
+<div class="pd-h3">Page 5: Event Schedule (schedule.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Display complete event timetable.</p>
+<div class="pd-label">Content</div>
+<ul class="pd-list"><li>Time</li><li>Event</li><li>Venue</li><li>9:00 AM</li><li>Inauguration</li><li>Auditorium</li><li>10:00 AM</li><li>Paper Presentation</li><li>Seminar Hall</li><li>11:30 AM</li><li>Coding Challenge</li><li>Lab 1</li><li>1:30 PM</li><li>Quiz Competition</li><li>Hall A</li><li>3:00 PM</li><li>Project Expo</li><li>Exhibition Hall</li><li>4:30 PM</li><li>Prize Distribution</li><li>Auditorium</li></ul>
+<div class="pd-h3">Page 6: Registration (register.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Allow students to register.</p>
+<div class="pd-label">Form Fields</div>
+<div class="pd-label">Personal Information</div>
+<ul class="pd-list"><li>Full Name</li><li>College Name</li><li>Department</li><li>Year of Study</li></ul>
+<div class="pd-label">Contact Information</div>
+<ul class="pd-list"><li>Email</li><li>Phone Number</li></ul>
+<div class="pd-label">Event Selection</div>
+<ul class="pd-list"><li>Choose Technical Event</li><li>Choose Non-Technical Event</li></ul>
+<div class="pd-label">Additional Information</div>
+<ul class="pd-list"><li>Address</li><li>Comments</li></ul>
+<div class="pd-label">Buttons</div>
+<ul class="pd-list"><li>Submit</li><li>Reset</li></ul>
+<div class="pd-h3">Page 7: Contact Us (contact.html)</div>
+<div class="pd-label">Purpose</div>
+<p class="pd-para">Provide communication details.</p>
+<div class="pd-label">Content</div>
+<ul class="pd-list"><li>Faculty Coordinator</li><li>Name</li><li>Email</li><li>Phone</li><li>Student Coordinators</li><li>Coordinator 1</li><li>Coordinator 2</li><li>Venue Address</li><li>Social Media Links</li><li>Instagram</li><li>LinkedIn</li><li>YouTube</li><li>Embedded College Location Image</li><li>(Static image, not a map)</li></ul>
+</div>
+
+<h3 class="sub-title">2. Code</h3>
+<div class="codefile">
+<div class="codefile-name">index.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Home&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+&lt;p&gt;National Level Technical Symposium&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;img src="images/banner.jpg" width="100%"&gt;
+
+&lt;h2&gt;Welcome&lt;/h2&gt;
+&lt;p&gt;Theme: Innovate. Integrate. Inspire.&lt;/p&gt;
+&lt;p&gt;Date: 12th and 13th September 2026&lt;/p&gt;
+&lt;p&gt;Venue: Main Auditorium, Sri Krishna College of Engineering&lt;/p&gt;
+&lt;p&gt;TechNova 2026 is our college technical symposium organised by the CSE department.
+It has technical events, non technical events and workshops for two days.&lt;/p&gt;
+
+&lt;h3&gt;Highlights&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;500+ Participants&lt;/li&gt;
+&lt;li&gt;15 Events&lt;/li&gt;
+&lt;li&gt;Cash Prizes&lt;/li&gt;
+&lt;li&gt;Industry Experts&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">about.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - About&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;About the Symposium&lt;/h2&gt;
+
+&lt;h3&gt;Objectives&lt;/h3&gt;
+&lt;p&gt;To give students a platform to show their technical skills and to encourage
+competition between colleges.&lt;/p&gt;
+
+&lt;h3&gt;Vision and Mission&lt;/h3&gt;
+&lt;p&gt;Vision: To be a well known symposium that helps students grow.&lt;/p&gt;
+&lt;p&gt;Mission: To connect classroom knowledge to real world problems.&lt;/p&gt;
+
+&lt;h3&gt;Organizing Department&lt;/h3&gt;
+&lt;p&gt;Department of Computer Science and Engineering.&lt;/p&gt;
+
+&lt;h3&gt;Why Students Should Participate&lt;/h3&gt;
+&lt;p&gt;Students get to learn new things, meet industry people and win prizes.&lt;/p&gt;
+
+&lt;h3&gt;Benefits of Participation&lt;/h3&gt;
+&lt;p&gt;Certificates, networking, and a chance to get internship offers from sponsors.&lt;/p&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">technical.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Technical Events&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Technical Events&lt;/h2&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 1: Paper Presentation&lt;/h3&gt;
+&lt;img src="images/paper-presentation.webp" width="250"&gt;
+&lt;p&gt;Description: Present your research ideas in front of judges.&lt;/p&gt;
+&lt;p&gt;Rules: Team of 1-2, 8 minutes presentation.&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.5000, 2nd Rs.3000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 2: Web Design Contest&lt;/h3&gt;
+&lt;img src="images/web-design.png" width="250"&gt;
+&lt;p&gt;Description: Build a website on a theme given on the spot.&lt;/p&gt;
+&lt;p&gt;Rules: Individual, 3 hours duration.&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.5000, 2nd Rs.3000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 3: Coding Challenge&lt;/h3&gt;
+&lt;img src="images/coding-challenge.webp" width="250"&gt;
+&lt;p&gt;Description: Solve coding problems in given time.&lt;/p&gt;
+&lt;p&gt;Rules: Individual, languages C/C++/Java/Python, 2 hours.&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.6000, 2nd Rs.4000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 4: Project Expo&lt;/h3&gt;
+&lt;img src="images/project-expo.jpg" width="250"&gt;
+&lt;p&gt;Description: Display your mini project to judges.&lt;/p&gt;
+&lt;p&gt;Rules: Team of 2-4, working model needed.&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.8000, 2nd Rs.5000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">nontechnical.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Non-Technical Events&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Non-Technical Events&lt;/h2&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 1: Photography&lt;/h3&gt;
+&lt;p&gt;Description: Click pictures on the theme given at the venue.&lt;/p&gt;
+&lt;p&gt;Rules: Individual, phone or DSLR allowed.&lt;/p&gt;
+&lt;p&gt;Registration Fee: Rs.100&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.2000, 2nd Rs.1000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 2: Quiz Competition&lt;/h3&gt;
+&lt;p&gt;Description: General knowledge and tech quiz.&lt;/p&gt;
+&lt;p&gt;Rules: Team of 2, prelims and finals.&lt;/p&gt;
+&lt;p&gt;Registration Fee: Rs.100&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.2000, 2nd Rs.1000&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 3: Treasure Hunt&lt;/h3&gt;
+&lt;p&gt;Description: Find clues around campus to win.&lt;/p&gt;
+&lt;p&gt;Rules: Team of 3-4, inside campus only.&lt;/p&gt;
+&lt;p&gt;Registration Fee: Rs.150&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.2500, 2nd Rs.1500&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;div&gt;
+&lt;h3&gt;Event 4: Gaming Tournament&lt;/h3&gt;
+&lt;p&gt;Description: Play and compete in popular games.&lt;/p&gt;
+&lt;p&gt;Rules: Knockout matches, fair play only.&lt;/p&gt;
+&lt;p&gt;Registration Fee: Rs.200&lt;/p&gt;
+&lt;p&gt;Prize: 1st Rs.3000, 2nd Rs.1500&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">schedule.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Event Schedule&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Event Schedule&lt;/h2&gt;
+
+&lt;table border="1"&gt;
+&lt;tr&gt;
+&lt;th&gt;Time&lt;/th&gt;
+&lt;th&gt;Event&lt;/th&gt;
+&lt;th&gt;Venue&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;9:00 AM&lt;/td&gt;
+&lt;td&gt;Inauguration&lt;/td&gt;
+&lt;td&gt;Auditorium&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;10:00 AM&lt;/td&gt;
+&lt;td&gt;Paper Presentation&lt;/td&gt;
+&lt;td&gt;Seminar Hall&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;11:30 AM&lt;/td&gt;
+&lt;td&gt;Coding Challenge&lt;/td&gt;
+&lt;td&gt;Lab 1&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;1:30 PM&lt;/td&gt;
+&lt;td&gt;Quiz Competition&lt;/td&gt;
+&lt;td&gt;Hall A&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;3:00 PM&lt;/td&gt;
+&lt;td&gt;Project Expo&lt;/td&gt;
+&lt;td&gt;Exhibition Hall&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;4:30 PM&lt;/td&gt;
+&lt;td&gt;Prize Distribution&lt;/td&gt;
+&lt;td&gt;Auditorium&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">register.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Registration&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Registration Form&lt;/h2&gt;
+
+&lt;form&gt;
+
+&lt;h3&gt;Personal Information&lt;/h3&gt;
+&lt;label for="fullname"&gt;Full Name:&lt;/label&gt; &lt;input type="text" id="fullname" name="fullname"&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="college"&gt;College Name:&lt;/label&gt; &lt;input type="text" id="college" name="college"&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="department"&gt;Department:&lt;/label&gt; &lt;input type="text" id="department" name="department"&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="year"&gt;Year of Study:&lt;/label&gt;
+&lt;select id="year" name="year"&gt;
+&lt;option&gt;First Year&lt;/option&gt;
+&lt;option&gt;Second Year&lt;/option&gt;
+&lt;option&gt;Third Year&lt;/option&gt;
+&lt;option&gt;Final Year&lt;/option&gt;
+&lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;h3&gt;Contact Information&lt;/h3&gt;
+&lt;label for="email"&gt;Email:&lt;/label&gt; &lt;input type="email" id="email" name="email"&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="phone"&gt;Phone Number:&lt;/label&gt; &lt;input type="text" id="phone" name="phone"&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;h3&gt;Event Selection&lt;/h3&gt;
+&lt;label for="techevent"&gt;Choose Technical Event:&lt;/label&gt;
+&lt;select id="techevent" name="techevent"&gt;
+&lt;option&gt;Paper Presentation&lt;/option&gt;
+&lt;option&gt;Web Design Contest&lt;/option&gt;
+&lt;option&gt;Coding Challenge&lt;/option&gt;
+&lt;option&gt;Project Expo&lt;/option&gt;
+&lt;/select&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="nontechevent"&gt;Choose Non-Technical Event:&lt;/label&gt;
+&lt;select id="nontechevent" name="nontechevent"&gt;
+&lt;option&gt;Photography&lt;/option&gt;
+&lt;option&gt;Quiz Competition&lt;/option&gt;
+&lt;option&gt;Treasure Hunt&lt;/option&gt;
+&lt;option&gt;Gaming Tournament&lt;/option&gt;
+&lt;/select&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;h3&gt;Additional Information&lt;/h3&gt;
+&lt;label for="address"&gt;Address:&lt;/label&gt;&lt;br&gt;
+&lt;textarea id="address" name="address" rows="3" cols="30"&gt;&lt;/textarea&gt;&lt;br&gt;&lt;br&gt;
+&lt;label for="comments"&gt;Comments:&lt;/label&gt;&lt;br&gt;
+&lt;textarea id="comments" name="comments" rows="3" cols="30"&gt;&lt;/textarea&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;input type="submit" value="Submit"&gt;
+&lt;input type="reset" value="Reset"&gt;
+
+&lt;/form&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="codefile">
+<div class="codefile-name">contact.html</div>
+<pre class="code">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;TechNova 2026 - Contact Us&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+
+&lt;img src="images/logo.svg" width="80"&gt;
+&lt;h1&gt;TechNova 2026&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="about.html"&gt;About&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="technical.html"&gt;Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="nontechnical.html"&gt;Non-Technical Events&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="schedule.html"&gt;Schedule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="register.html"&gt;Register&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="contact.html"&gt;Contact Us&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Contact Us&lt;/h2&gt;
+
+&lt;h3&gt;Faculty Coordinator&lt;/h3&gt;
+&lt;p&gt;Name: Dr. R. Meenakshi&lt;/p&gt;
+&lt;p&gt;Email: meenakshi.r@technova2026.edu&lt;/p&gt;
+&lt;p&gt;Phone: +91 98765 43210&lt;/p&gt;
+
+&lt;h3&gt;Student Coordinators&lt;/h3&gt;
+&lt;p&gt;Coordinator 1: Arjun Kumar - 90000 11111&lt;/p&gt;
+&lt;p&gt;Coordinator 2: Sneha Patil - 90000 22222&lt;/p&gt;
+
+&lt;h3&gt;Venue Address&lt;/h3&gt;
+&lt;p&gt;Sri Krishna College of Engineering,&lt;br&gt;
+Kuniyamuthur, Coimbatore - 641008,&lt;br&gt;
+Tamil Nadu, India&lt;/p&gt;
+
+&lt;h3&gt;Social Media&lt;/h3&gt;
+&lt;p&gt;&lt;a href="https://instagram.com/technova2026"&gt;Instagram&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://linkedin.com/company/technova2026"&gt;LinkedIn&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://youtube.com/@technova2026"&gt;YouTube&lt;/a&gt;&lt;/p&gt;
+
+&lt;h3&gt;College Location&lt;/h3&gt;
+&lt;img src="images/college-location.jpg" width="400"&gt;
+
+&lt;hr&gt;
+&lt;p&gt;Copyright 2026 TechNova. CSE Department.&lt;/p&gt;
+&lt;p&gt;&lt;a href="index.html"&gt;Home&lt;/a&gt; | &lt;a href="about.html"&gt;About&lt;/a&gt; | &lt;a href="schedule.html"&gt;Schedule&lt;/a&gt; | &lt;a href="contact.html"&gt;Contact&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Instagram | LinkedIn | YouTube&lt;/p&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+
+<h3 class="sub-title">3. Output Screenshots</h3>
+<div class="shot">
+<div class="shot-caption">index.html</div>
+<img src="../ss/index.png">
+</div>
+<div class="shot">
+<div class="shot-caption">about.html</div>
+<img src="../ss/about.png">
+</div>
+<div class="shot">
+<div class="shot-caption">technical.html</div>
+<img src="../ss/technical.png">
+</div>
+<div class="shot">
+<div class="shot-caption">nontechnical.html</div>
+<img src="../ss/nontechnical.png">
+</div>
+<div class="shot">
+<div class="shot-caption">schedule.html</div>
+<img src="../ss/schedule.png">
+</div>
+<div class="shot">
+<div class="shot-caption">register.html</div>
+<img src="../ss/register.png">
+</div>
+<div class="shot">
+<div class="shot-caption">contact.html</div>
+<img src="../ss/contact.png">
+</div>
+
+<h3 class="sub-title">4. Learning Outcomes</h3>
+<ul class="outcomes"><li>Learned the basic structure of an HTML document and how to build a multi-page website by linking pages together with anchor tags.</li><li>Practiced using lists, tables and forms (input, select, textarea) to organise and collect content on a page.</li><li>Understood that HTML alone only defines structure and content, and has no control over layout or appearance.</li></ul>
+
+</body>
+</html>

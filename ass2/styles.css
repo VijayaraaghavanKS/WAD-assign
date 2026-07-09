@@ -1,0 +1,188 @@
+body {
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  background-color: #f2f2f2;
+  background-image: url("images/logo.svg");
+  background-repeat: no-repeat;
+  background-position: top right;
+  background-size: 50px;
+}
+
+h1 {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: bold;
+}
+
+h2 {
+  text-align: center;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 50px;
+  height: 3px;
+  background-color: orange;
+  margin: 5px auto;
+}
+
+/* nav bar */
+.nav {
+  list-style: none;
+  display: flex;
+  padding: 0;
+  background-color: #333;
+}
+
+.nav li a {
+  display: block;
+  color: white;
+  padding: 10px 15px;
+  text-decoration: none;
+}
+
+.nav li a:hover {
+  background-color: orange;
+}
+
+.nav li a.active {
+  background-color: orange;
+}
+
+/* highlight section */
+.highlight {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+}
+
+.highlight li {
+  background-color: #ddd;
+  margin: 5px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+/* event cards */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.box {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: transform 0.2s;
+}
+
+.box:hover {
+  transform: scale(1.02);
+}
+
+.box img {
+  max-width: 100%;
+  border-radius: 6px;
+  box-shadow: 2px 2px 5px #999;
+}
+
+/* table */
+.tab1 {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tab1 th, .tab1 td {
+  border: 1px solid #999;
+  padding: 8px;
+}
+
+.tab1 th {
+  background-color: #333;
+  color: white;
+}
+
+.tab1 tr:nth-child(even) {
+  background-color: #eee;
+}
+
+.tab1 tr:hover {
+  background-color: orange;
+}
+
+/* form */
+.form1 label {
+  font-weight: bold;
+}
+
+.form1 input, .form1 select, .form1 textarea {
+  padding: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #999;
+  border-radius: 4px;
+}
+
+.form1 input:focus, .form1 textarea:focus {
+  outline: none;
+  border-color: orange;
+}
+
+.form1 input[type="submit"], .form1 input[type="reset"] {
+  background-color: #333;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+}
+
+/* contact page */
+.contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* footer */
+.foot {
+  background-color: #333;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.foot a {
+  color: white;
+  margin: 0 5px;
+}
+
+/* back to top button */
+.top {
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+  background-color: orange;
+  color: white;
+  padding: 10px;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+/* responsive */
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav {
+    flex-direction: column;
+  }
+}
