@@ -1,0 +1,57 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: #f4f5f9;
+}
+
+.controls {
+  margin: 16px 0;
+}
+
+.controls button,
+.controls input {
+  padding: 8px 12px;
+  margin: 0 6px;
+  font-size: 1rem;
+}
+
+#winText {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #16a34a;
+  min-height: 1.6rem;
+}
+
+.boards {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap: 4px;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #999;
+  font-weight: bold;
+  background: #fff;
+}
+
+.cell.marked {
+  background: #4ade80;
+  color: #fff;
+}
+
+.board.winner .cell {
+  border-color: #f59e0b;
+}

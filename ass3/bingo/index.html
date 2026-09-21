@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Two Player Bingo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Two Player Bingo</h1>
+
+  <div class="controls">
+    <button id="startBtn">Start</button>
+    <button id="resetBtn">Reset</button>
+    <input type="number" id="numberInput" min="1" max="25" placeholder="Enter number 1-25" />
+    <button id="markBtn">Mark</button>
+  </div>
+
+  <p id="turnText">Click Start to begin</p>
+  <p id="winText"></p>
+
+  <div class="boards">
+    <div class="board-container">
+      <h2>Player 1</h2>
+      <div id="board1" class="board"></div>
+    </div>
+    <div class="board-container">
+      <h2>Player 2</h2>
+      <div id="board2" class="board"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
