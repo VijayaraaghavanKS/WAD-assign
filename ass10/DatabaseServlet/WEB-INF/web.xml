@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <!-- Maps the class to a logical name, then maps that name to a URL. -->
+    <servlet>
+        <servlet-name>DatabaseServlet</servlet-name>
+        <servlet-class>com.ssn.servlet.DatabaseServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>DatabaseServlet</servlet-name>
+        <url-pattern>/DatabaseServlet</url-pattern>
+    </servlet-mapping>
+
+</web-app>
