@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q5: Add List Item</title>
+</head>
+<body>
+    <input type="text" id="item">
+    <button id="btn">Add Item</button>
+    <ul id="list"></ul>
+
+    <script>
+        document.getElementById('btn').onclick = function() {
+            let val = document.getElementById('item').value;
+            if (val.trim() !== "") {
+                let li = document.createElement('li');
+                li.innerText = val;
+                document.getElementById('list').appendChild(li);
+                document.getElementById('item').value = "";
+            }
+        };
+    </script>
+</body>
+</html>

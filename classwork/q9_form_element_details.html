@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q9: Form Details</title>
+</head>
+<body>
+    <form id="frm">
+        Name: <input type="text" id="nm"><br>
+        Role: <select id="rl">
+            <option>Admin</option>
+            <option>User</option>
+        </select><br>
+        <button type="button" onclick="getDetails()">Get Details</button>
+    </form>
+    <p id="out"></p>
+
+    <script>
+        function getDetails() {
+            let name = document.getElementById('nm').value;
+            let role = document.getElementById('rl').value;
+            document.getElementById('out').innerText = "Name: " + name + ", Role: " + role;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q3: Add Paragraph</title>
+</head>
+<body>
+    <button id="btn">Add Paragraph</button>
+    <div id="container"></div>
+
+    <script>
+        document.getElementById('btn').onclick = function() {
+            let p = document.createElement('p');
+            p.innerText = "New Paragraph added!";
+            document.getElementById('container').appendChild(p);
+        };
+    </script>
+</body>
+</html>

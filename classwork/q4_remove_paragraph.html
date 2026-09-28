@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q4: Remove Paragraph</title>
+</head>
+<body>
+    <button id="btn">Remove Last Paragraph</button>
+    <div id="container">
+        <p>Paragraph 1</p>
+        <p>Paragraph 2</p>
+        <p>Paragraph 3</p>
+    </div>
+
+    <script>
+        document.getElementById('btn').onclick = function() {
+            let div = document.getElementById('container');
+            if (div.lastElementChild) {
+                div.removeChild(div.lastElementChild);
+            }
+        };
+    </script>
+</body>
+</html>

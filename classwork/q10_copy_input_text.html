@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q10: Copy Input Box</title>
+</head>
+<body>
+    <input type="text" id="src">
+    <button id="btn">Copy</button>
+    <input type="text" id="dest">
+
+    <script>
+        document.getElementById('btn').onclick = function() {
+            document.getElementById('dest').value = document.getElementById('src').value;
+        };
+    </script>
+</body>
+</html>

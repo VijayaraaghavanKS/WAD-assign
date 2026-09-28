@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q2: Simple Calculator</title>
+</head>
+<body>
+    <input type="number" id="n1">
+    <input type="number" id="n2">
+    <br><br>
+    <button onclick="calc('+')">+</button>
+    <button onclick="calc('-')">-</button>
+    <button onclick="calc('*')">*</button>
+    <button onclick="calc('/')">/</button>
+    <p>Result: <span id="res"></span></p>
+
+    <script>
+        function calc(op) {
+            let a = parseFloat(document.getElementById('n1').value);
+            let b = parseFloat(document.getElementById('n2').value);
+            let r = op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : a / b;
+            document.getElementById('res').innerText = r;
+        }
+    </script>
+</body>
+</html>

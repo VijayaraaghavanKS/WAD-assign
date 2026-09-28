@@ -1,0 +1,626 @@
+% ============================================================
+%  Sri Sivasubramaniya Nadar College of Engineering, Kalavakkam
+%  Department of Computer Science and Engineering
+%  Course: ICS1503 - Web Application Development
+%  Assignment 2: Design and Implementation of Test Cases for a Spring Boot Application
+%  Exercises 8 (Monolith) & 9 (Microservices)
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=2.3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% Colour palette
+\definecolor{codebg}{HTML}{1E1E2E}
+\definecolor{codefg}{HTML}{CDD6F4}
+\definecolor{accent}{HTML}{312E81}
+\definecolor{primary}{HTML}{4338CA}
+\definecolor{cgreen}{HTML}{16A34A}
+\definecolor{ccomment}{HTML}{6A9955}
+\definecolor{ckeyword}{HTML}{569CD6}
+\definecolor{cstring}{HTML}{CE9178}
+\definecolor{lightbg}{HTML}{F8FAFC}
+
+% Code listing style -- Java
+\lstdefinestyle{javastyle}{
+  language=Java,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize\color{codefg},
+  keywordstyle=\color{ckeyword}\bfseries,
+  stringstyle=\color{cstring},
+  commentstyle=\color{ccomment}\itshape,
+  numberstyle=\tiny\color{codefg!60},
+  numbers=left, numbersep=6pt,
+  frame=single, rulecolor=\color{primary!40},
+  breaklines=true, breakatwhitespace=true,
+  tabsize=2, showstringspaces=false, captionpos=b,
+  morekeywords={@RestController,@RequestMapping,@GetMapping,@PostMapping,
+    @PutMapping,@DeleteMapping,@CrossOrigin,@PathVariable,@RequestBody,
+    @Service,@Component,@Document,@Id,@Data,@NoArgsConstructor,
+    @AllArgsConstructor,@Value,@ExtendWith,@MockitoBean,@Autowired,
+    @BeforeEach,@Test,@WebMvcTest,@AutoConfigureMockMvc,@MockitoExtension,
+    ResponseEntity,HttpStatus,MockMvc},
+}
+
+% Code listing style -- JS/plain
+\lstdefinestyle{jsstyle}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize\color{codefg},
+  keywordstyle=\color{ckeyword}\bfseries,
+  stringstyle=\color{cstring},
+  commentstyle=\color{ccomment}\itshape,
+  numberstyle=\tiny\color{codefg!60},
+  numbers=left, numbersep=6pt,
+  frame=single, rulecolor=\color{primary!40},
+  breaklines=true, tabsize=2, showstringspaces=false, captionpos=b,
+  morekeywords={const, export, let, var, async, await, return, function, if, new, this, defineStore},
+}
+
+\lstdefinestyle{plainstyle}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize\color{codefg},
+  frame=single, rulecolor=\color{primary!40},
+  breaklines=true, captionpos=b,
+}
+
+\hypersetup{
+  colorlinks=true, linkcolor=primary, urlcolor=primary,
+  pdftitle={WAD Assignment 2 - Spring Boot Testing and Shopping Cart Architecture},
+}
+
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{primary}{\textbf{SSN CSE -- ICS1503 Web Application Development}}}
+\fancyhead[R]{\small Assignment 2: Spring Boot Testing}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{primary}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{}{0em}{}
+\captionsetup{font=small,labelfont=bf}
+
+\begin{document}
+
+% ── TITLE PAGE ──────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{0.5cm}
+  {\large\bfseries SRI SIVASUBRAMANIYA NADAR COLLEGE OF ENGINEERING\par}
+  {\small (An Autonomous Institution, Affiliated to Anna University, Chennai)\par}
+  {\small Kalavakkam -- 603 110, Tamil Nadu, India\par}
+  \vspace{0.4cm}
+  {\bfseries DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING\par}
+  \vspace{1.2cm}
+  
+  \rule{\linewidth}{1pt}\vspace{0.3cm}
+  {\Large\bfseries\color{primary} ICS1503 -- WEB APPLICATION DEVELOPMENT\par}
+  \vspace{0.2cm}
+  {\large\bfseries THEORY ASSIGNMENT 2 REPORT\par}
+  \vspace{0.2cm}
+  {\normalsize\bfseries Design and Implementation of Test Cases for a Spring Boot Application\par}
+  {\footnotesize (Covers Exercises 8 \& 9: Monolithic and Microservices Architecture with Developer Dashboard)\par}
+  \vspace{0.3cm}\rule{\linewidth}{1pt}
+  
+  \vspace{1.8cm}
+  
+  \begin{tabularx}{0.9\linewidth}{lX}
+    \textbf{Course Code / Name:} & ICS1503 / Web Application Development (Theory) \\
+    \textbf{Degree \& Branch:}   & 5-Year Integrated M.Tech Computer Science \& Engineering \\
+    \textbf{Semester / Year:}    & Semester V / Academic Year 2026--2027 \\
+    \textbf{Batch:}              & 2024 -- 2029 \\
+    \textbf{Course Coordinator:} & Dr. B. Prabavathy, Associate Professor / CSE \\
+    \textbf{Course Category:}    & Professional Core (PC), Regulation R2023 \\
+  \end{tabularx}
+  
+  \vfill
+  
+  \begin{tabularx}{0.9\linewidth}{lX}
+    \textbf{Submitted By:}       & Vijayaraaghavan K S \\
+    \textbf{Department:}         & Computer Science and Engineering \\
+    \textbf{Technology Stack:}   & Spring Boot 4, JUnit 5, Mockito, MockMvc, MongoDB, Vue 3 \\
+    \textbf{Date of Submission:} & September 2026 \\
+  \end{tabularx}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ── 1. INTRODUCTION & OBJECTIVES ────────────────────────────
+\section{Introduction and Objectives}
+
+\subsection{Problem Statement}
+In modern web application engineering, reliable testing is critical for maintaining software correctness, continuous integration, and safe deployments. This assignment focuses on the **Design and Implementation of Test Cases for a Spring Boot Application** backing a full-stack shopping cart system.
+
+The application manages product catalogue entries and shopping cart state with the following domain entity attributes:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Product ID}: Unique string identifier ($\alpha\beta$ key or UUID / MongoDB ObjectId).
+  \item \textbf{Product Name}: Descriptive title of the product.
+  \item \textbf{Price}: Unit cost in Indian Rupees (INR).
+  \item \textbf{Quantity}: Available inventory units in stock.
+\end{itemize}
+
+The backend exposes a standardized RESTful API:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{POST /api/products} --- Add a new product to catalogue.
+  \item \texttt{GET /api/products} --- Retrieve list of all products.
+  \item \texttt{GET /api/products/\{id\}} --- Retrieve a specific product by ID.
+  \item \texttt{PUT /api/products/\{id\}} --- Update existing product details.
+  \item \texttt{DELETE /api/products/\{id\}} --- Remove product by ID.
+\end{itemize}
+
+\subsection{Testing Objectives}
+The testing suite is designed with JUnit 5, \texttt{@SpringBootTest}, \texttt{@WebMvcTest}, and Spring's \texttt{MockMvc} to validate:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Positive Test Cases}: Successful product addition, retrieval of all products, retrieval of an item by valid ID, updates to an existing product, and product deletion.
+  \item \textbf{Negative Test Cases}: Adding products with missing name or negative price, querying non-existent product IDs (404 Not Found), updating non-existent entities (404 Not Found), and verifying that deleted entities cannot be retrieved.
+  \item \textbf{Architectural Evolution}: Evaluating test strategies across both the monolithic implementation (\textbf{Exercise 8}) and the distributed microservices decomposition (\textbf{Exercise 9}).
+\end{enumerate}
+
+% ── 2. SYSTEM ARCHITECTURE ──────────────────────────────────
+\section{System Architecture: Monolithic vs. Microservices}
+
+\subsection{Exercise 8: Monolithic Architecture}
+In Exercise 8, all functional domains (Product Catalogue, Shopping Cart, and Developer Live Observability) are packaged inside a single Spring Boot service running on port \texttt{8082}, communicating directly with MongoDB database \texttt{ShoppingCartDB}.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=0.92\textwidth]{.report-assets/ss_shop.png}
+  \caption{Exercise 8: Shop View with interactive product grid, 3D card tilt effect, and persistent cart drawer}
+\end{figure}
+
+The monolithic call hierarchy flows directly in-process:
+\[
+  \text{Vue 3 Frontend} \;\longrightarrow\; \text{ProductController / CartController} \;\longrightarrow\; \text{CartService} \;\longrightarrow\; \text{MongoDB}
+\]
+
+\subsection{Exercise 9: Microservices Architecture}
+Exercise 9 refactors the monolithic application into two independently deployable microservices:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Product Service (Port 8083)}: Maintains its own independent database (\texttt{E-CommDB}) and owns the product catalogue.
+  \item \textbf{Cart Service (Port 8084)}: Maintains its own database (\texttt{CartServiceDB}) and manages cart sessions.
+  \item \textbf{Inter-Service REST Communication}: When a product is added to the cart, Cart Service initiates an outbound HTTP GET request using \texttt{RestTemplate} to \texttt{http://localhost:8083/api/products/\{id\}} to resolve the product name and current price.
+\end{itemize}
+
+\[
+  \text{Vue Frontend} \;\longrightarrow\; \text{Cart Service (8084)} \;\xrightarrow[\text{RestTemplate}]{\text{HTTP GET}}\; \text{Product Service (8083)}
+\]
+
+% ── 3. TEST DESIGN & SPECIFICATION ──────────────────────────
+\section{Test Design and Test Case Specification}
+
+The test cases are designed following rigorous software engineering standards, validating HTTP status codes, JSON payload integrity, repository interactions, and business invariants.
+
+\subsection{Test Case Matrix (Positive \& Negative)}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{lllXl}
+  \toprule
+  \textbf{ID} & \textbf{Scenario} & \textbf{Type} & \textbf{Request / Endpoint} & \textbf{Expected Status} \\
+  \midrule
+  \texttt{TC01} & Add valid product & Positive & \texttt{POST /api/products} & \texttt{200 OK} \\
+  \texttt{TC02} & Add product (empty name) & Negative & \texttt{POST /api/products} with \texttt{""} & \texttt{400 Bad Req} \\
+  \texttt{TC03} & Add product (negative price)& Negative & \texttt{POST /api/products} with \texttt{-100} & \texttt{400 Bad Req} \\
+  \texttt{TC04} & Retrieve all products & Positive & \texttt{GET /api/products} & \texttt{200 OK} \\
+  \texttt{TC05} & Retrieve product by valid ID & Positive & \texttt{GET /api/products/p1} & \texttt{200 OK} \\
+  \texttt{TC06} & Retrieve product (invalid ID)& Negative & \texttt{GET /api/products/non-existent}& \texttt{404 Not Found} \\
+  \texttt{TC07} & Update existing product & Positive & \texttt{PUT /api/products/p1} & \texttt{200 OK} \\
+  \texttt{TC08} & Update non-existent product & Negative & \texttt{PUT /api/products/invalid-id} & \texttt{404 Not Found} \\
+  \texttt{TC09} & Delete existing product & Positive & \texttt{DELETE /api/products/p1} & \texttt{200 OK} \\
+  \texttt{TC10} & Verify deleted cannot be read & Negative & \texttt{GET /api/products/p1} (post-delete) & \texttt{404 Not Found} \\
+  \midrule
+  \texttt{TC11} & Add new item to Cart & Positive & CartService addToCart (new item) & CartItem saved \\
+  \texttt{TC12} & Add existing item to Cart & Positive & CartService addToCart (duplicate) & Qty incremented \\
+  \texttt{TC13} & Compute total cart amount & Positive & CartService getTotal & Accurate sum \\
+  \texttt{TC14} & Update item quantity & Positive & CartService updateQuantity & Updated \\
+  \texttt{TC15} & Remove item from Cart & Positive & CartService removeItem & Item deleted \\
+  \texttt{TC16} & Clear entire Cart & Positive & CartService clearCart & All deleted \\
+  \texttt{TC17} & Context bootstrapping & Positive & Spring Context Initialization & Context loaded \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+% ── 4. BACKEND IMPLEMENTATION ───────────────────────────────
+\section{Backend Source Code Listings}
+
+\subsection{Product Domain Model (Product.java)}
+
+\begin{lstlisting}[style=javastyle, caption={Product.java: Model containing ID, Name, Price, and Quantity}]
+package com.ssn.cartbackend.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Document(collection = "products")
+public class Product {
+
+    @Id
+    private String id;
+    private String name;
+    private double price;
+    private int quantity;
+
+    public Product(String id, String name, double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.quantity = 0;
+    }
+}
+\end{lstlisting}
+
+\subsection{Product Controller (ProductController.java)}
+
+\begin{lstlisting}[style=javastyle, caption={ProductController.java: REST Endpoints with Input Validation}]
+package com.ssn.cartbackend.controller;
+
+import com.ssn.cartbackend.model.Product;
+import com.ssn.cartbackend.repository.ProductRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/products")
+@CrossOrigin(origins = "*")
+public class ProductController {
+
+    private final ProductRepository repository;
+
+    public ProductController(ProductRepository repository) {
+        this.repository = repository;
+    }
+
+    @GetMapping
+    public List<Product> getAllProducts() {
+        return repository.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable String id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createProduct(@RequestBody Product product) {
+        if (product.getName() == null || product.getName().trim().isEmpty() || product.getPrice() < 0) {
+            return ResponseEntity.badRequest().body("Product name is required and price must be non-negative");
+        }
+        Product saved = repository.save(product);
+        return ResponseEntity.ok(saved);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable String id, @RequestBody Product updated) {
+        return repository.findById(id).map(product -> {
+            if (updated.getName() != null) product.setName(updated.getName());
+            if (updated.getPrice() >= 0) product.setPrice(updated.getPrice());
+            if (updated.getQuantity() >= 0) product.setQuantity(updated.getQuantity());
+            return ResponseEntity.ok(repository.save(product));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable String id) {
+        repository.deleteById(id);
+        return ResponseEntity.ok("Product deleted");
+    }
+}
+\end{lstlisting}
+
+% ── 5. TEST IMPLEMENTATION CODE ─────────────────────────────
+\section{JUnit 5 and MockMvc Test Implementation}
+
+\subsection{MockMvc REST Controller Tests (ProductControllerTest.java)}
+
+\begin{lstlisting}[style=javastyle, caption={ProductControllerTest.java: Full suite of Positive and Negative Web Tests}]
+package com.ssn.cartbackend.controller;
+
+import com.ssn.cartbackend.model.Product;
+import com.ssn.cartbackend.repository.ProductRepository;
+import com.ssn.cartbackend.repository.RequestLogRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(ProductController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class ProductControllerTest {
+
+    @Autowired private MockMvc mockMvc;
+    @MockitoBean private ProductRepository repository;
+    @MockitoBean private RequestLogRepository requestLogRepository;
+
+    @Test
+    void getAllProducts_returnsJsonArray() throws Exception {
+        when(repository.findAll()).thenReturn(List.of(
+                new Product("p1", "Laptop", 55000, 10),
+                new Product("p2", "Mouse", 700, 25)
+        ));
+
+        mockMvc.perform(get("/api/products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Laptop"))
+                .andExpect(jsonPath("$[0].price").value(55000.0))
+                .andExpect(jsonPath("$[1].name").value("Mouse"))
+                .andExpect(jsonPath("$[1].price").value(700.0));
+    }
+
+    @Test
+    void getProductById_validId_returnsProduct() throws Exception {
+        Product product = new Product("p1", "Laptop", 55000, 10);
+        when(repository.findById("p1")).thenReturn(Optional.of(product));
+
+        mockMvc.perform(get("/api/products/p1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("p1"))
+                .andExpect(jsonPath("$.name").value("Laptop"))
+                .andExpect(jsonPath("$.price").value(55000.0));
+    }
+
+    @Test
+    void getProductById_invalidId_returnsNotFound() throws Exception {
+        when(repository.findById("non-existent")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/products/non-existent"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createProduct_validData_savesAndReturnsIt() throws Exception {
+        Product saved = new Product("p3", "Webcam", 3200, 15);
+        when(repository.save(any(Product.class))).thenReturn(saved);
+
+        mockMvc.perform(post("/api/products")
+                        .contentType("application/json")
+                        .content("{\"name\":\"Webcam\",\"price\":3200,\"quantity\":15}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Webcam"))
+                .andExpect(jsonPath("$.price").value(3200.0));
+    }
+
+    @Test
+    void createProduct_missingOrEmptyName_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType("application/json")
+                        .content("{\"name\":\"\",\"price\":3200,\"quantity\":10}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createProduct_negativePrice_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/products")
+                        .contentType("application/json")
+                        .content("{\"name\":\"Invalid Item\",\"price\":-100,\"quantity\":5}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateProduct_existingProduct_updatesAndReturnsIt() throws Exception {
+        Product existing = new Product("p1", "Laptop", 55000, 10);
+        when(repository.findById("p1")).thenReturn(Optional.of(existing));
+        when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        mockMvc.perform(put("/api/products/p1")
+                        .contentType("application/json")
+                        .content("{\"name\":\"Laptop Pro\",\"price\":60000,\"quantity\":12}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Laptop Pro"))
+                .andExpect(jsonPath("$.price").value(60000.0));
+    }
+
+    @Test
+    void updateProduct_nonExistentProduct_returnsNotFound() throws Exception {
+        when(repository.findById("invalid-id")).thenReturn(Optional.empty());
+
+        mockMvc.perform(put("/api/products/invalid-id")
+                        .contentType("application/json")
+                        .content("{\"name\":\"NonExistent\",\"price\":1000,\"quantity\":1}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteProduct_existingProduct_returnsOk() throws Exception {
+        mockMvc.perform(delete("/api/products/p1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Product deleted"));
+
+        verify(repository).deleteById(eq("p1"));
+    }
+
+    @Test
+    void verifyDeletedProduct_cannotBeRetrieved() throws Exception {
+        mockMvc.perform(delete("/api/products/p1")).andExpect(status().isOk());
+        when(repository.findById("p1")).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/products/p1")).andExpect(status().isNotFound());
+    }
+}
+\end{lstlisting}
+
+\subsection{Service Layer Tests (CartServiceTest.java)}
+
+\begin{lstlisting}[style=javastyle, caption={CartServiceTest.java: Business Logic Unit Tests using Mockito}]
+@ExtendWith(MockitoExtension.class)
+class CartServiceTest {
+
+    @Mock private CartRepository cartRepository;
+    @Mock private ProductRepository productRepository;
+    private CartService cartService;
+
+    @BeforeEach
+    void setUp() { cartService = new CartService(cartRepository, productRepository); }
+
+    @Test
+    void addToCart_newProduct_createsCartItemFromProduct() {
+        Product product = new Product("p1", "Laptop", 55000, 10);
+        when(cartRepository.findByProductId("p1")).thenReturn(null);
+        when(productRepository.findById("p1")).thenReturn(Optional.of(product));
+        when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CartItem result = cartService.addToCart("p1");
+
+        assertThat(result.getProductId()).isEqualTo("p1");
+        assertThat(result.getProductName()).isEqualTo("Laptop");
+        assertThat(result.getPrice()).isEqualTo(55000);
+        assertThat(result.getQuantity()).isEqualTo(1);
+    }
+
+    @Test
+    void addToCart_existingProduct_incrementsQuantityInsteadOfDuplicating() {
+        CartItem existing = new CartItem("c1", "p1", "Laptop", 55000, 2);
+        when(cartRepository.findByProductId("p1")).thenReturn(existing);
+        when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CartItem result = cartService.addToCart("p1");
+
+        assertThat(result.getQuantity()).isEqualTo(3);
+        verify(productRepository, never()).findById(any());
+    }
+
+    @Test
+    void getTotal_sumsPriceTimesQuantityAcrossAllItems() {
+        when(cartRepository.findAll()).thenReturn(List.of(
+                new CartItem("c1", "p1", "Laptop", 55000, 1),
+                new CartItem("c2", "p2", "Mouse",     700, 2)));
+
+        assertThat(cartService.getTotal()).isEqualTo(55000 + 700 * 2);
+    }
+}
+\end{lstlisting}
+
+% ── 6. TEST EXECUTION & SCREENSHOTS ─────────────────────────
+\section{Test Execution Results and Screenshots}
+
+\subsection{Automated Test Suite Output (17 Passed)}
+The entire test suite was executed via the Maven wrapper:
+\begin{lstlisting}[style=plainstyle]
+JAVA_HOME=/opt/homebrew/opt/openjdk@21 ./mvnw test
+\end{lstlisting}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{.report-assets/ss_test_terminal.png}
+  \caption{Terminal Execution Report: All 17 Unit, Controller, and Context tests executing with 0 failures and BUILD SUCCESS}
+\end{figure}
+
+\begin{lstlisting}[style=plainstyle, caption={Maven Test Execution Summary}]
+[INFO] Running com.ssn.cartbackend.controller.ProductControllerTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time: 1.554 s
+[INFO] Running com.ssn.cartbackend.service.CartServiceTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time: 0.060 s
+[INFO] Running com.ssn.cartbackend.CartBackendApplicationTests
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time: 0.374 s
+[INFO] Results:
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.353 s
+\end{lstlisting}
+
+\subsection{Application Interface \& Developer Dashboard}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{.report-assets/ss_admin.png}
+  \caption{Admin Interface: Product catalogue management supporting inline editing and addition of items}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{.report-assets/ss_developer.png}
+  \caption{Developer Interface: Real-time request telemetry capturing API duration, response codes, and aggregate health metrics}
+\end{figure}
+
+% ── 7. MICROSERVICE INTER-SERVICE TESTING (EXERCISE 9) ───────
+\section{Microservice Testing Strategy (Exercise 9)}
+
+In the microservices version (\textbf{Exercise 9}), the product and cart domains are physically separated across independent ports and databases:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Product Service}: port 8083, database \texttt{E-CommDB}
+  \item \textbf{Cart Service}: port 8084, database \texttt{CartServiceDB}
+\end{itemize}
+
+When \texttt{CartService.addToCart(productId)} is invoked, it makes an HTTP call:
+\begin{lstlisting}[style=javastyle]
+ProductDto product = restTemplate.getForObject(
+    productServiceUrl + "/api/products/" + productId, ProductDto.class);
+\end{lstlisting}
+
+To test this in unit tests without spinning up a live network server, \texttt{RestTemplate} is mocked:
+\begin{lstlisting}[style=javastyle, caption={Mocking RestTemplate in Exercise 9 CartServiceTest}]
+@Test
+void addToCart_newProduct_callsProductServiceThenSaves() {
+    when(cartRepository.findByProductId("p1")).thenReturn(null);
+    when(restTemplate.getForObject(
+            eq("http://localhost:8083/api/products/p1"), eq(ProductDto.class)))
+        .thenReturn(new ProductDto("p1", "Laptop", 55000));
+    when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CartItem result = cartService.addToCart("p1");
+
+    assertThat(result.getProductName()).isEqualTo("Laptop");
+    assertThat(result.getPrice()).isEqualTo(55000);
+}
+
+@Test
+void addToCart_existingProduct_skipsProductServiceCall() {
+    CartItem existing = new CartItem("c1", "p1", "Laptop", 55000, 1);
+    when(cartRepository.findByProductId("p1")).thenReturn(existing);
+    when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CartItem result = cartService.addToCart("p1");
+
+    assertThat(result.getQuantity()).isEqualTo(2);
+    // Verifies no redundant network calls are triggered
+    verify(restTemplate, never()).getForObject(any(String.class), eq(ProductDto.class));
+}
+\end{lstlisting}
+
+% ── 8. CONCLUSION ───────────────────────────────────────────
+\section{Conclusion}
+
+This assignment demonstrated the end-to-end design, implementation, and verification of a Spring Boot testing architecture for an e-commerce shopping cart system:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Exhaustive Coverage}: All 10 controller test scenarios (including positive addition, missing name, negative price, retrieval, 404 queries, updates, and post-delete 404 verification) and 6 cart service business rules were verified.
+  \item \textbf{100\% Success Rate}: All 17 tests in the monolith and 7 tests in the microservices pass cleanly without failures or regressions.
+  \item \textbf{Real-Time Observability}: The embedded Developer Interface and RequestLoggingFilter provide seamless observability into request durations and error rates directly in the browser.
+\end{itemize}
+
+\end{document}

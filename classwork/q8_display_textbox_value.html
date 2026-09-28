@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Q8: Display Textbox Value</title>
+</head>
+<body>
+    <input type="text" id="txt">
+    <button id="btn">Display</button>
+    <p id="out"></p>
+
+    <script>
+        document.getElementById('btn').onclick = function() {
+            document.getElementById('out').innerText = document.getElementById('txt').value;
+        };
+    </script>
+</body>
+</html>

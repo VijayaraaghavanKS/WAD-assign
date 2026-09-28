@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TechNova 2026 - Registration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Logo & Title -->
+  <div class="header-container">
+    <img src="images/logo.svg" class="logo" alt="TechNova Logo">
+    <h1>TechNova 2026</h1>
+    <p class="subtitle">National Level Technical Symposium</p>
+  </div>
+
+  <!-- Sticky Navigation Bar -->
+  <ul class="nav">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="technical.html">Technical Events</a></li>
+    <li><a href="nontechnical.html">Non-Technical Events</a></li>
+    <li><a href="schedule.html">Schedule</a></li>
+    <li><a href="register.html" class="active">Register</a></li>
+    <li><a href="contact.html">Contact Us</a></li>
+  </ul>
+
+  <!-- Content Section -->
+  <div class="container">
+    <h2>Online Registration Form</h2>
+    
+    <form class="form1" action="#" method="post">
+      
+      <fieldset>
+        <legend>Personal Information</legend>
+        
+        <div class="form-group">
+          <label for="fullname">Full Name:</label> 
+          <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="college">College Name:</label> 
+          <input type="text" id="college" name="college" placeholder="Enter your college name" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="department">Department / Branch:</label> 
+          <input type="text" id="department" name="department" placeholder="e.g. CSE, IT, ECE" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="year">Year of Study:</label>
+          <select id="year" name="year">
+            <option value="1">First Year</option>
+            <option value="2">Second Year</option>
+            <option value="3">Third Year</option>
+            <option value="4">Final Year</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Contact Information</legend>
+        
+        <div class="form-group">
+          <label for="email">Email Address:</label> 
+          <input type="email" id="email" name="email" placeholder="example@domain.com" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="phone">Phone Number:</label> 
+          <input type="tel" id="phone" name="phone" placeholder="10-digit mobile number" required>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Event Selection</legend>
+        
+        <div class="form-group">
+          <label for="techevent">Choose Technical Event:</label>
+          <select id="techevent" name="techevent">
+            <option value="none">-- None --</option>
+            <option value="paper">Paper Presentation</option>
+            <option value="web">Web Design Contest</option>
+            <option value="coding">Coding Challenge</option>
+            <option value="expo">Project Expo</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="nontechevent">Choose Non-Technical Event:</label>
+          <select id="nontechevent" name="nontechevent">
+            <option value="none">-- None --</option>
+            <option value="photo">Photography Contest</option>
+            <option value="quiz">Mastermind Quiz</option>
+            <option value="hunt">Campus Treasure Hunt</option>
+            <option value="game">Esports Arena</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Additional Details</legend>
+        
+        <div class="form-group">
+          <label for="address">Address for Correspondence:</label>
+          <textarea id="address" name="address" rows="4" placeholder="Enter your complete address"></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="comments">Specific Comments / Requirements:</label>
+          <textarea id="comments" name="comments" rows="3" placeholder="Any specific requirements or queries?"></textarea>
+        </div>
+      </fieldset>
+      
+      <div class="button-group">
+        <input type="submit" value="Submit Registration">
+        <input type="reset" value="Clear Form">
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Footer Section -->
+  <div class="foot">
+    <p>&copy; 2026 TechNova. Department of CSE. All Rights Reserved.</p>
+    <p class="foot-links">
+      <a href="index.html">Home</a> | 
+      <a href="about.html">About</a> | 
+      <a href="schedule.html">Schedule</a> | 
+      <a href="contact.html">Contact Us</a>
+    </p>
+    <p class="social-text">Instagram &bull; LinkedIn &bull; YouTube</p>
+  </div>
+
+  <!-- Back to Top Button -->
+  <a href="#" class="top">Top</a>
+
+</body>
+</html>

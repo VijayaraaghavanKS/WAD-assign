@@ -1,0 +1,21 @@
+# OS
+.DS_Store
+
+# Archives
+*.zip
+
+# Node / Vite
+node_modules/
+dist/
+
+# Java / Maven
+target/
+*.class
+
+# Python
+.venv/
+__pycache__/
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,108 @@
+@page {
+  size: A4;
+  margin: 2.5cm 2cm;
+  @bottom-center { content: counter(page); font-family: 'Latin Modern Roman', 'Georgia', serif; font-size: 10pt; }
+}
+
+body {
+  font-family: 'Latin Modern Roman', 'Georgia', 'Times New Roman', serif;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #111;
+}
+
+h1 {
+  font-size: 18pt;
+  border-bottom: 1px solid #999;
+  padding-bottom: 4px;
+  color: #7a1f2b;
+}
+
+h2 {
+  font-size: 14pt;
+  color: #111;
+  margin-top: 1.4em;
+}
+
+h3 {
+  font-size: 12pt;
+  margin-top: 1.2em;
+}
+
+code {
+  font-family: 'DejaVu Sans Mono', 'Menlo', monospace;
+  font-size: 9.5pt;
+}
+
+pre {
+  background: #f4f3ec;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 9pt;
+  line-height: 1.35;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 10.5pt;
+}
+
+table, th, td {
+  border: 1px solid #999;
+}
+
+th, td {
+  padding: 5px 8px;
+  text-align: left;
+}
+
+img {
+  max-width: 100%;
+  border: 1px solid #ccc;
+  margin: 8px 0;
+}
+
+.titlepage {
+  text-align: center;
+  page-break-after: always;
+  padding-top: 15%;
+}
+
+.titlepage .college {
+  font-size: 16pt;
+  font-weight: bold;
+}
+
+.titlepage .recordtitle {
+  font-size: 26pt;
+  font-weight: bold;
+  margin: 40px 0 6px;
+}
+
+.titlepage .subject {
+  font-size: 13pt;
+  color: #333;
+}
+
+.titlepage .exercise {
+  font-size: 15pt;
+  font-weight: bold;
+  margin-top: 60px;
+}
+
+.titlepage .submitted {
+  margin-top: 120px;
+  font-size: 11pt;
+  line-height: 1.8;
+}
+
+.titlepage .submitted .label {
+  font-weight: bold;
+  margin-top: 20px;
+}
