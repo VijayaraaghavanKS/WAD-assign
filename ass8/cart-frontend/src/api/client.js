@@ -39,6 +39,8 @@ export const api = {
   register: (username, password) => request('/auth/register', { method: 'POST', body: json({ username, password }) }),
 
   getProducts: (category) => request(`/products${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+  getProduct: (id) => request(`/products/${id}`),
+  addReview: (id, review) => request(`/products/${id}/reviews`, { method: 'POST', body: json(review) }),
   createProduct: (product) => request('/products', { method: 'POST', body: json(product) }),
   updateProduct: (id, product) => request(`/products/${id}`, { method: 'PUT', body: json(product) }),
   deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
@@ -48,8 +50,12 @@ export const api = {
   updateQuantity: (cartItemId, quantity) => request(`/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
   removeItem: (cartItemId) => request(`/cart/${cartItemId}`, { method: 'DELETE' }),
 
-  placeOrder: () => request('/orders', { method: 'POST' }),
+  // body: { coupon, address: { name, phone, line1, city, state, pin }, payment: 'UPI' | 'CARD' | 'COD' }
+  placeOrder: (body) => request('/orders', { method: 'POST', body: json(body) }),
   getOrders: () => request('/orders'),
+  getAllOrders: () => request('/orders/all'),
+  getOrderStats: () => request('/orders/stats'),
+  setOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PUT', body: json({ status }) }),
 
   getLogs: () => request('/dev/logs'),
   getMetrics: () => request('/dev/metrics'),
@@ -60,11 +66,13 @@ export const ENDPOINTS = [
   { service: 'Auth', method: 'POST', path: '/api/auth/login', desc: 'Log in, returns a session token' },
   { service: 'Auth', method: 'GET', path: '/api/auth/me', desc: 'Who owns this token' },
   { service: 'Products', method: 'GET', path: '/api/products?category=', desc: 'List products, optionally by category' },
+  { service: 'Products', method: 'GET', path: '/api/products/{id}', desc: 'One product with sizes, colours, specs and reviews' },
+  { service: 'Products', method: 'POST', path: '/api/products/{id}/reviews', desc: 'Post a review (logged-in shopper)' },
   { service: 'Products', method: 'POST', path: '/api/products', desc: 'Create a product (admin only)' },
-  { service: 'Products', method: 'PUT', path: '/api/products/{id}', desc: 'Update a product (admin only)' },
-  { service: 'Cart', method: 'GET', path: '/api/cart', desc: 'Get the logged-in user\'s cart' },
+  { service: 'Cart', method: 'GET', path: '/api/cart', desc: "Get the logged-in user's cart" },
   { service: 'Cart', method: 'POST', path: '/api/cart/add/{productId}', desc: 'Add to cart, applying any sale price' },
-  { service: 'Cart', method: 'DELETE', path: '/api/cart', desc: 'Clear the cart' },
-  { service: 'Orders', method: 'POST', path: '/api/orders', desc: 'Checkout: take stock, save order, clear cart' },
+  { service: 'Orders', method: 'POST', path: '/api/orders', desc: 'Checkout: address, payment, coupon, invoice' },
   { service: 'Orders', method: 'GET', path: '/api/orders', desc: 'Order history for the logged-in user' },
+  { service: 'Orders', method: 'GET', path: '/api/orders/stats', desc: 'Sales totals and chart data (admin only)' },
+  { service: 'Orders', method: 'PUT', path: '/api/orders/{id}/status', desc: 'Move an order along (admin only)' },
 ]

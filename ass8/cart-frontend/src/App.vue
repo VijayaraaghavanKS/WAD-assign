@@ -14,11 +14,11 @@ const route = useRoute()
 watch(() => auth.isLoggedIn, (loggedIn) => loggedIn && cart.load(), { immediate: true })
 onMounted(() => auth.isLoggedIn && cart.load())
 
-// Links each role can see. Shop is open to everyone.
+// Links each role can see. The shop belongs to shoppers only.
 const links = computed(() => {
   const role = auth.role
   const extra = { USER: [['/orders', Package, 'My orders']], ADMIN: [['/admin', ShieldCheck, 'Admin']], DEVELOPER: [['/dev', Activity, 'Developer']] }
-  return [['/', ShoppingBag, 'Shop'], ...(extra[role] ?? [])]
+  return role === 'USER' ? [['/', ShoppingBag, 'Shop'], ...extra.USER] : (extra[role] ?? [])
 })
 
 // A RouterLink to the current route does nothing, so the cart button goes to
@@ -109,7 +109,7 @@ function logout() {
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; }
 
 body {
   font-family: 'Instrument Sans', system-ui, sans-serif;
@@ -120,7 +120,7 @@ body {
 
 h1, h2, h3, .brand { font-family: 'Fraunces', Georgia, serif; }
 
-#shell { min-height: 100%; display: flex; flex-direction: column; }
+#shell { min-height: 100vh; display: flex; flex-direction: column; }
 
 ::selection { background: var(--accent); color: #fff; }
 
@@ -280,6 +280,8 @@ main {
 .pill-success { background: var(--success-bg); color: var(--success); }
 .pill-danger { background: var(--danger-bg); color: var(--danger); }
 .pill-warn { background: #f6e7cf; color: var(--accent-dark); }
+
+@media print { .masthead, .site-footer, .no-print { display: none !important; } body { background: #fff; } }
 
 .stars { color: var(--star); display: inline-flex; align-items: center; gap: 2px; }
 </style>
