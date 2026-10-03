@@ -16,10 +16,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-// Unit tests for the microservice interaction itself: Cart Service must
-// call out to Product Service (mocked RestTemplate here, no real HTTP or
-// MongoDB) before it can add a new item, but must NOT call out again when
-// the product is already in the cart.
+// A new product triggers one call to Product Service; a product already in
+// the user's cart only bumps its quantity.
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
 
@@ -38,26 +36,26 @@ class CartServiceTest {
     }
 
     @Test
-    void addToCart_newProduct_callsProductServiceThenSaves() {
-        when(cartRepository.findByProductId("p1")).thenReturn(null);
+    void addToCart_newProduct_appliesDiscountAndSaves() {
+        when(cartRepository.findByUserIdAndProductId("u1", "p1")).thenReturn(null);
         when(restTemplate.getForObject(eq("http://localhost:8083/api/products/p1"), eq(ProductDto.class)))
-                .thenReturn(new ProductDto("p1", "Laptop", 55000));
+                .thenReturn(new ProductDto("p1", "Laptop", 50000, 10));
         when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        CartItem result = cartService.addToCart("p1");
+        CartItem result = cartService.addToCart("u1", "p1");
 
         assertThat(result.getProductName()).isEqualTo("Laptop");
-        assertThat(result.getPrice()).isEqualTo(55000);
+        assertThat(result.getPrice()).isEqualTo(45000);
         assertThat(result.getQuantity()).isEqualTo(1);
     }
 
     @Test
     void addToCart_existingProduct_skipsProductServiceCall() {
-        CartItem existing = new CartItem("c1", "p1", "Laptop", 55000, 1);
-        when(cartRepository.findByProductId("p1")).thenReturn(existing);
+        CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 1);
+        when(cartRepository.findByUserIdAndProductId("u1", "p1")).thenReturn(existing);
         when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        CartItem result = cartService.addToCart("p1");
+        CartItem result = cartService.addToCart("u1", "p1");
 
         assertThat(result.getQuantity()).isEqualTo(2);
         verify(restTemplate, never()).getForObject(any(String.class), eq(ProductDto.class));

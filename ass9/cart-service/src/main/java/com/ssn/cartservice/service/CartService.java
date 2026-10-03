@@ -23,46 +23,42 @@ public class CartService {
         this.restTemplate = restTemplate;
     }
 
-    public List<CartItem> getCart() {
-        return cartRepository.findAll();
+    public List<CartItem> getCart(String userId) {
+        return cartRepository.findByUserId(userId);
     }
 
-    public double getTotal() {
-        return cartRepository.findAll().stream()
+    public double getTotal(String userId) {
+        return getCart(userId).stream()
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
     }
 
-    // Microservice interaction: Cart Service calls Product Service over HTTP
-    // (GET /api/products/{id}) to fetch the product's name and price before
-    // storing a cart line for it. Cart Service never touches "products" directly.
-    public CartItem addToCart(String productId) {
-        CartItem existing = cartRepository.findByProductId(productId);
+    // Cart Service asks Product Service for the price (and any sale) before saving a line.
+    public CartItem addToCart(String userId, String productId) {
+        CartItem existing = cartRepository.findByUserIdAndProductId(userId, productId);
         if (existing != null) {
             existing.setQuantity(existing.getQuantity() + 1);
             return cartRepository.save(existing);
         }
 
         ProductDto product = restTemplate.getForObject(
-                productServiceUrl + "/api/products/" + productId,
-                ProductDto.class
-        );
+                productServiceUrl + "/api/products/" + productId, ProductDto.class);
+        double salePrice = product.getPrice() * (100 - product.getDiscountPercent()) / 100.0;
 
-        CartItem item = new CartItem(null, product.getId(), product.getName(), product.getPrice(), 1);
-        return cartRepository.save(item);
+        return cartRepository.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1));
     }
 
-    public CartItem updateQuantity(String cartItemId, int quantity) {
-        CartItem item = cartRepository.findById(cartItemId).orElseThrow();
+    public CartItem updateQuantity(String userId, String cartItemId, int quantity) {
+        CartItem item = cartRepository.findById(cartItemId).filter(i -> i.getUserId().equals(userId)).orElseThrow();
         item.setQuantity(quantity);
         return cartRepository.save(item);
     }
 
-    public void removeItem(String cartItemId) {
-        cartRepository.deleteById(cartItemId);
+    public void removeItem(String userId, String cartItemId) {
+        cartRepository.deleteByIdAndUserId(cartItemId, userId);
     }
 
-    public void clearCart() {
-        cartRepository.deleteAll();
+    public void clearCart(String userId) {
+        cartRepository.deleteByUserId(userId);
     }
 }

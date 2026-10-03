@@ -19,10 +19,9 @@ public class Product {
     private double price;
     private int quantity;
 
-    public Product(String id, String name, double price) {
-        this.id = id;
-        this.name = name;
-        this.price = price;
-        this.quantity = 0;
-    }
+    // Shown as a category chip on the storefront, e.g. "Electronics".
+    private String category;
+
+    // 0 means no sale. Cart Service applies this when the item is added.
+    private int discountPercent;
 }
