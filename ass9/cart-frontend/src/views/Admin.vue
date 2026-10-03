@@ -5,9 +5,9 @@ import { api } from '../api/client'
 import { getProductImage } from '../utils/productImage'
 
 const products = ref([])
-const newProduct = reactive({ name: '', price: null, quantity: null })
+const newProduct = reactive({ name: '', price: null, quantity: null, category: '', discountPercent: 0 })
 const editingId = ref(null)
-const editDraft = reactive({ name: '', price: null, quantity: null })
+const editDraft = reactive({ name: '', price: null, quantity: null, category: '', discountPercent: 0 })
 
 async function refresh() {
   products.value = await api.getProducts()
@@ -18,19 +18,18 @@ async function addProduct() {
   await api.createProduct({
     name: newProduct.name,
     price: Number(newProduct.price),
-    quantity: newProduct.quantity == null || newProduct.quantity === '' ? 0 : Number(newProduct.quantity),
+    quantity: Number(newProduct.quantity || 0),
+    category: newProduct.category || 'More',
+    discountPercent: Number(newProduct.discountPercent || 0),
   })
-  newProduct.name = ''
-  newProduct.price = null
-  newProduct.quantity = null
+  Object.assign(newProduct, { name: '', price: null, quantity: null, category: '', discountPercent: 0 })
   await refresh()
 }
 
+// Category and sale stay as they were; only name, price and stock are edited inline.
 function startEdit(p) {
   editingId.value = p.id
-  editDraft.name = p.name
-  editDraft.price = p.price
-  editDraft.quantity = p.quantity
+  Object.assign(editDraft, { name: p.name, price: p.price, quantity: p.quantity, category: p.category, discountPercent: p.discountPercent })
 }
 
 async function saveEdit(id) {
@@ -38,6 +37,8 @@ async function saveEdit(id) {
     name: editDraft.name,
     price: Number(editDraft.price),
     quantity: Number(editDraft.quantity),
+    category: editDraft.category,
+    discountPercent: editDraft.discountPercent,
   })
   editingId.value = null
   await refresh()
@@ -85,7 +86,9 @@ onMounted(refresh)
       <input v-model="newProduct.name" placeholder="Product name" required />
       <input v-model="newProduct.price" type="number" min="0" placeholder="Price (₹)" required />
       <input v-model="newProduct.quantity" type="number" min="0" placeholder="Stock quantity" />
-      <button type="submit" class="btn btn-buy"><PackagePlus :size="16" /> Add Product</button>
+      <input v-model="newProduct.category" placeholder="Category (e.g. Audio)" />
+      <input v-model="newProduct.discountPercent" type="number" min="0" max="90" placeholder="Sale %" />
+      <button type="submit" class="btn btn-primary"><PackagePlus :size="16" /> Add Product</button>
     </form>
 
     <div class="table-card">
@@ -94,7 +97,9 @@ onMounted(refresh)
           <tr>
             <th></th>
             <th>Product</th>
+            <th>Category</th>
             <th>Price</th>
+            <th>Sale %</th>
             <th>Stock</th>
             <th></th>
           </tr>
@@ -104,7 +109,9 @@ onMounted(refresh)
             <td><img :src="getProductImage(p.name)" :alt="p.name" class="thumb" /></td>
             <template v-if="editingId === p.id">
               <td><input v-model="editDraft.name" /></td>
+              <td><input v-model="editDraft.category" /></td>
               <td><input v-model="editDraft.price" type="number" min="0" /></td>
+              <td><input v-model="editDraft.discountPercent" type="number" min="0" max="90" /></td>
               <td><input v-model="editDraft.quantity" type="number" min="0" /></td>
               <td class="actions">
                 <button class="btn btn-outline" @click="saveEdit(p.id)"><Check :size="15" /> Save</button>
@@ -113,7 +120,9 @@ onMounted(refresh)
             </template>
             <template v-else>
               <td class="pname">{{ p.name }}</td>
+              <td>{{ p.category || 'More' }}</td>
               <td class="price-cell">₹{{ p.price.toLocaleString() }}</td>
+              <td>{{ p.discountPercent ? p.discountPercent + '%' : '—' }}</td>
               <td><span class="pill" :class="stockClass(p.quantity)">{{ stockLabel(p.quantity) }}</span></td>
               <td class="actions">
                 <button class="btn btn-outline" @click="startEdit(p)"><Pencil :size="14" /> Edit</button>
@@ -122,7 +131,7 @@ onMounted(refresh)
             </template>
           </tr>
           <tr v-if="products.length === 0">
-            <td colspan="5" class="empty-row">No products yet. Add your first listing above.</td>
+            <td colspan="7" class="empty-row">No products yet. Add your first listing above.</td>
           </tr>
         </tbody>
       </table>

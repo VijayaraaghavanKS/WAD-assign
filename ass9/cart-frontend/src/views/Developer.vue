@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { Code2, Gauge, Timer, TriangleAlert, Clock, ScrollText, BookOpen } from 'lucide-vue-next'
 import { api, ENDPOINTS } from '../api/client'
+import ServiceMap from '../components/ServiceMap.vue'
 
 // Each microservice has its own request_logs collection and its own
 // /api/dev/metrics -- there is no shared log store, so this view fetches
@@ -46,8 +47,10 @@ onUnmounted(() => clearInterval(timer))
   <div class="dev">
     <div class="dev-head">
       <h1><Code2 :size="22" /> Developer Console</h1>
-      <span class="subtitle">Two independent Spring Boot services, each with its own MongoDB and its own request log</span>
+      <span class="subtitle">Four independent Spring Boot services, each with its own MongoDB and its own request log</span>
     </div>
+
+    <ServiceMap />
 
     <div class="service-row">
       <div class="service-col" v-if="productMetrics">
