@@ -25,9 +25,16 @@ public class CartService {
         return carts.findByUserId(userId);
     }
 
-    // A new product copies name and sale price from the catalog. An existing one only gets +1.
     public CartItem addToCart(String userId, String productId) {
-        CartItem existing = carts.findByUserIdAndProductId(userId, productId);
+        return addToCart(userId, productId, null, null);
+    }
+
+    // A new product copies name and sale price from the catalog. An existing one only gets +1.
+    // Size and colour are part of the line: the same product in two sizes is two lines.
+    public CartItem addToCart(String userId, String productId, String size, String colour) {
+        size = blankToNull(size);
+        colour = blankToNull(colour);
+        CartItem existing = carts.findByUserIdAndProductIdAndSizeAndColour(userId, productId, size, colour);
         if (existing != null) {
             existing.setQuantity(existing.getQuantity() + 1);
             return carts.save(existing);
@@ -36,7 +43,11 @@ public class CartService {
         Product product = products.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No such product"));
         double salePrice = product.getPrice() * (100 - product.getDiscountPercent()) / 100.0;
-        return carts.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1));
+        return carts.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1, size, colour));
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     public CartItem updateQuantity(String userId, String cartItemId, int quantity) {

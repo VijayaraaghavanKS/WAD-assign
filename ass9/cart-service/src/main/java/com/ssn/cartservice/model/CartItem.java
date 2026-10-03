@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-// One row per (user, product). Name and price are copied from Product Service
+// One row per (user, product, size, colour). Name and price are copied from Product Service
 // when the item is added, since this service never reads the products collection.
 @Data
 @NoArgsConstructor
@@ -22,4 +22,6 @@ public class CartItem {
     private String productName;
     private double price; // already discounted
     private int quantity;
+    private String size;    // null when the product has no sizes
+    private String colour;  // null when the product has no colours
 }

@@ -33,9 +33,16 @@ public class CartService {
                 .sum();
     }
 
-    // Cart Service asks Product Service for the price (and any sale) before saving a line.
     public CartItem addToCart(String userId, String productId) {
-        CartItem existing = cartRepository.findByUserIdAndProductId(userId, productId);
+        return addToCart(userId, productId, null, null);
+    }
+
+    // Cart Service asks Product Service for the price (and any sale) before saving a line.
+    // Size and colour are part of the line: the same product in two sizes is two lines.
+    public CartItem addToCart(String userId, String productId, String size, String colour) {
+        size = blankToNull(size);
+        colour = blankToNull(colour);
+        CartItem existing = cartRepository.findByUserIdAndProductIdAndSizeAndColour(userId, productId, size, colour);
         if (existing != null) {
             existing.setQuantity(existing.getQuantity() + 1);
             return cartRepository.save(existing);
@@ -45,7 +52,11 @@ public class CartService {
                 productServiceUrl + "/api/products/" + productId, ProductDto.class);
         double salePrice = product.getPrice() * (100 - product.getDiscountPercent()) / 100.0;
 
-        return cartRepository.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1));
+        return cartRepository.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1, size, colour));
+    }
+
+    private static String blankToNull(String s) {
+        return s == null || s.isBlank() ? null : s.trim();
     }
 
     public CartItem updateQuantity(String userId, String cartItemId, int quantity) {

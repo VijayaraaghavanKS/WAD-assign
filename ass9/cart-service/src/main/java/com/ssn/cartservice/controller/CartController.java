@@ -36,8 +36,11 @@ public class CartController {
 
     @PostMapping("/add/{productId}")
     public CartItem addToCart(@RequestHeader(value = "Authorization", required = false) String authorization,
-                              @PathVariable String productId) {
-        return service.addToCart(userId(authorization), productId);
+                              @PathVariable String productId,
+                              @RequestBody(required = false) Map<String, String> variant) {
+        String size = variant == null ? null : variant.get("size");
+        String colour = variant == null ? null : variant.get("colour");
+        return service.addToCart(userId(authorization), productId, size, colour);
     }
 
     @PutMapping("/{cartItemId}")

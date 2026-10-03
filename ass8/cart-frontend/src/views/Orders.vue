@@ -47,7 +47,7 @@ function say(text) {
 
 // Adds one product to the cart. Used by Buy again and Reorder.
 async function addLine(line) {
-  for (let i = 0; i < line.quantity; i++) await cart.add(line.productId)
+  for (let i = 0; i < line.quantity; i++) await cart.add(line.productId, { size: line.size, colour: line.colour })
 }
 
 async function buyAgain(o) {
@@ -148,6 +148,7 @@ onMounted(async () => {
                 <img :src="getProductImage(line.productName)" :alt="line.productName" />
                 <div>
                   <RouterLink :to="`/product/${line.productId}`" class="item-name">{{ line.productName }}</RouterLink>
+                  <div v-if="line.size || line.colour" class="variant">{{ [line.size && 'Size ' + line.size, line.colour && 'Colour ' + line.colour].filter(Boolean).join(' · ') }}</div>
                   <div class="item-actions no-print">
                     <button class="link" @click="shopper.toggleWishlist(line.productId)">
                       <Heart :size="13" /> {{ shopper.wishlist.includes(line.productId) ? 'Saved' : 'Save for later' }}
@@ -220,6 +221,7 @@ h1 { margin: 0; font-size: 2rem; }
 .item img { width: 58px; height: 58px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
 .item-name { color: var(--ink); font-weight: 600; text-decoration: none; }
 .item-name:hover { text-decoration: underline; color: var(--link); }
+.variant { font-size: 0.82rem; color: var(--ink-soft); }
 .item-actions { display: flex; gap: 12px; margin-top: 4px; }
 .link { background: none; border: none; padding: 0; font: inherit; font-size: 0.8rem; color: var(--link); cursor: pointer; display: inline-flex; gap: 4px; align-items: center; text-decoration: none; }
 .btn.small { padding: 5px 12px; font-size: 0.8rem; }

@@ -55,11 +55,10 @@ async function load() {
   }
 }
 
-// The cart stores product ids, so size and colour are shown as the choice
-// but are not saved on the cart line (see the README limits).
+// Size and colour go with the cart line, so the order keeps the choice.
 async function addToCart() {
   try {
-    for (let i = 0; i < qty.value; i++) await cart.add(product.value.id)
+    for (let i = 0; i < qty.value; i++) await cart.add(product.value.id, { size: size.value, colour: colour.value })
     notify(`Added ${qty.value} to your cart`)
   } catch (e) {
     notify(e.message)

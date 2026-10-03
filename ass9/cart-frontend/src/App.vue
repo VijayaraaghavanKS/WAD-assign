@@ -78,6 +78,7 @@ function logout() {
 
     <footer class="site-footer">
       MaisonCart &mdash; ICS1511 Web Application Development Laboratory
+      &middot; <RouterLink to="/credits">Photo credits</RouterLink>
     </footer>
   </div>
 </template>
@@ -233,6 +234,8 @@ main {
   margin: 0 auto;
   padding: 28px 24px 56px;
 }
+
+.site-footer a { color: #e9dccb; }
 
 .site-footer {
   background: var(--navy-dark);

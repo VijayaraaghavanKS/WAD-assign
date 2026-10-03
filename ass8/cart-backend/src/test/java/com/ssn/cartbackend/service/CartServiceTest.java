@@ -36,7 +36,7 @@ class CartServiceTest {
 
     @Test
     void addToCart_newProduct_appliesSalePrice() {
-        when(carts.findByUserIdAndProductId("u1", "p1")).thenReturn(null);
+        when(carts.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(null);
         when(products.findById("p1")).thenReturn(Optional.of(new Product("p1", "Laptop", 50000, 5, "Electronics", 10)));
         when(carts.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -49,8 +49,8 @@ class CartServiceTest {
 
     @Test
     void addToCart_existingProduct_incrementsQuantity() {
-        CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 2);
-        when(carts.findByUserIdAndProductId("u1", "p1")).thenReturn(existing);
+        CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 2, null, null);
+        when(carts.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(existing);
         when(carts.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
         assertThat(service.addToCart("u1", "p1").getQuantity()).isEqualTo(3);

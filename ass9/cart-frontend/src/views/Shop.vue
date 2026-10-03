@@ -84,7 +84,8 @@ async function loadProducts() {
 
 async function addToCart(product) {
   try {
-    await cart.add(product.id)
+    // Cards add the first size and colour; the product page lets the shopper choose.
+    await cart.add(product.id, { size: product.sizes?.[0], colour: product.colors?.[0] })
     notify(`Added ${product.name} to your cart`)
   } catch (e) {
     notify(e.message, true)
@@ -250,6 +251,7 @@ onUnmounted(() => clearInterval(clock))
           <li v-for="item in cart.items" :key="item.id">
             <div class="line-info">
               <span class="line-name">{{ item.productName }}</span>
+              <span v-if="item.size || item.colour" class="variant">{{ [item.size, item.colour].filter(Boolean).join(' · ') }}</span>
               <span class="line-price">₹{{ (item.price * item.quantity).toLocaleString() }}</span>
             </div>
             <div class="line-actions">
@@ -452,6 +454,7 @@ onUnmounted(() => clearInterval(clock))
 .lines li { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
 .line-info { display: flex; justify-content: space-between; gap: 10px; font-size: 0.92rem; }
 .line-name { font-weight: 600; }
+.variant { display: block; font-size: 0.8rem; color: var(--ink-soft); }
 .line-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 .icon {
   border: 1px solid var(--border); background: #fff; border-radius: 6px;

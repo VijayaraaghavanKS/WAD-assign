@@ -16,8 +16,8 @@ export const useCartStore = defineStore('cart', {
       this.items = (await api.getCart()) ?? []
     },
 
-    async add(productId) {
-      await api.addToCart(productId)
+    async add(productId, variant) {
+      await api.addToCart(productId, variant)
       await this.load()
     },
 

@@ -6,6 +6,7 @@ import Orders from '../views/Orders.vue'
 import Admin from '../views/Admin.vue'
 import Developer from '../views/Developer.vue'
 import ProductDetail from '../views/ProductDetail.vue'
+import Credits from '../views/Credits.vue'
 
 const HOME = { USER: '/', ADMIN: '/admin', DEVELOPER: '/dev' }
 
@@ -14,6 +15,7 @@ const routes = [
   { path: '/login', component: Login, meta: { public: true } },
   { path: '/', component: Shop, meta: { roles: ['USER'] } },
   { path: '/product/:id', component: ProductDetail },
+  { path: '/credits', component: Credits, meta: { public: true } },
   { path: '/orders', component: Orders, meta: { roles: ['USER'] } },
   { path: '/admin', component: Admin, meta: { roles: ['ADMIN'] } },
   { path: '/dev', component: Developer, meta: { roles: ['DEVELOPER'] } },

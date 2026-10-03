@@ -46,7 +46,8 @@ export const api = {
   deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
 
   getCart: () => request('/cart'),
-  addToCart: (productId) => request(`/cart/add/${productId}`, { method: 'POST' }),
+  // variant is { size, colour }; both are optional. Each size and colour is its own cart line.
+  addToCart: (productId, variant) => request(`/cart/add/${productId}`, { method: 'POST', body: variant ? json(variant) : undefined }),
   updateQuantity: (cartItemId, quantity) => request(`/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
   removeItem: (cartItemId) => request(`/cart/${cartItemId}`, { method: 'DELETE' }),
 

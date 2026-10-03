@@ -84,7 +84,7 @@ public class CheckoutService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Some items are out of stock. Please update your cart.");
         }
 
-        double subtotal = lines.stream().mapToDouble(l -> l.price() * l.quantity()).sum();
+        double subtotal = Math.round(lines.stream().mapToDouble(l -> l.price() * l.quantity()).sum() * 100) / 100.0;
         double discount = percent == null ? 0 : Math.round(subtotal * percent) / 100.0;
         double afterDiscount = subtotal - discount;
         double deliveryFee = afterDiscount >= FREE_DELIVERY_AT ? 0 : DELIVERY_FEE;
@@ -97,7 +97,7 @@ public class CheckoutService {
         order.setDiscount(discount);
         order.setCouponCode(code);
         order.setDeliveryFee(deliveryFee);
-        order.setTotal(afterDiscount + deliveryFee);
+        order.setTotal(Math.round((afterDiscount + deliveryFee) * 100) / 100.0);
         order.setTax(Math.round(order.getTotal() * GST_RATE / (100 + GST_RATE) * 100) / 100.0);
         order.setStatus("PLACED");
         order.setPlacedAt(Instant.now());
@@ -185,7 +185,9 @@ public class CheckoutService {
                     (String) item.get("productId"),
                     (String) item.get("productName"),
                     ((Number) item.get("price")).doubleValue(),
-                    ((Number) item.get("quantity")).intValue()));
+                    ((Number) item.get("quantity")).intValue(),
+                    (String) item.get("size"),
+                    (String) item.get("colour")));
         }
         return lines;
     }

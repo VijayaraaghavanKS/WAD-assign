@@ -22,4 +22,6 @@ public class CartItem {
     private String productName;
     private double price; // already discounted
     private int quantity;
+    private String size;    // null when the product has no sizes
+    private String colour;  // null when the product has no colours
 }

@@ -1,29 +1,10 @@
-// Maps a product's name to a real product photo based on keyword matching,
-// so newly admin-added products ("Gaming Mouse", "Bluetooth Speaker", ...)
-// automatically get a sensible photo without hardcoding by ID.
-const images = import.meta.glob('../assets/products/*.jpg', { eager: true, import: 'default' })
-
-const CATEGORY_KEYWORDS = [
-  ['laptop', ['laptop', 'notebook', 'macbook']],
-  ['headphones', ['headphone', 'headset', 'earphone', 'earbud']],
-  ['keyboard', ['keyboard']],
-  ['mouse', ['mouse']],
-  ['phone', ['phone', 'mobile']],
-  ['watch', ['watch']],
-  ['shoes', ['shoe', 'sneaker']],
-  ['bag', ['bag', 'backpack']],
-  ['speaker', ['speaker']],
-  ['camera', ['camera']],
-  ['monitor', ['monitor', 'display', 'screen']],
-  ['tablet', ['tablet', 'ipad']],
-]
-
+// Product photos are open-licensed images in public/products, one per product,
+// named after the product (scripts/fetch-product-images.py writes them and their
+// credits, shown on the Credits page). The name is turned into a file name here.
 export function getProductImage(name) {
-  const lower = (name || '').toLowerCase()
-  for (const [category, keywords] of CATEGORY_KEYWORDS) {
-    if (keywords.some((k) => lower.includes(k))) {
-      return images[`../assets/products/${category}.jpg`]
-    }
-  }
-  return images['../assets/products/generic.jpg']
+  return `/products/${slugify(name)}.jpg`
+}
+
+function slugify(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
