@@ -5,15 +5,15 @@ A small online store built two ways for ICS1511 Web Application Development:
 - **Exercise 8 (`ass8/`)**: one Spring Boot app, one database, one port. A monolith.
 - **Exercise 9 (`ass9/`)**: four separate Spring Boot services, each with its own database and port. Microservices.
 
-Both use the same Vue 3 storefront, the same API paths, and the same demo accounts. You can compare the two designs side by side.
+Both use the same Vue 3 storefront, the same API paths, and the same demo accounts, so you can compare the two designs side by side.
 
 ---
 
 ## 1. The idea in one minute
 
-Shoppers browse a catalogue, add items to a cart, and check out. Admins manage stock and prices. Developers watch what the system is doing in real time.
+Shoppers browse a catalogue, save favourites, compare products, add items with the size and colour they want, and check out with a delivery address and a payment method. Admins see sales, track each product's performance, and move orders along. Developers watch every service's requests live.
 
-The point is not to compete with Amazon on scale. The point is to show, clearly and in working code, how a real store is put together: login and roles, stock that is reserved safely at checkout, sale prices that are fixed at the moment of purchase, and a console that makes the system easy to inspect.
+The point is not to compete with Amazon on scale. The point is to show, in working code, how a real store is put together: login and roles, stock reserved safely at checkout, sale prices fixed at the moment of purchase, invoices with GST, and a console that makes the system easy to inspect.
 
 ---
 
@@ -23,12 +23,12 @@ The point is not to compete with Amazon on scale. The point is to show, clearly 
 |---|---|---|
 | Backend | 1 Spring Boot app | 4 Spring Boot apps |
 | Port | 8082 | 8083 (product), 8084 (cart), 8085 (user), 8086 (order) |
-| Database | `ShoppingCartDB` | One database per service |
+| Database | `ShoppingCartDB` | One database per service (`E-CommDB`, `CartServiceDB`, `UserServiceDB`, `OrderServiceDB`) |
 | Calls between parts | Direct method calls | HTTP calls over REST |
-| Frontend | Same code, all calls go to port 8082 | Same code, calls go to each service's port |
-| Good for | Simple deployment, fast local runs | Scaling and deploying parts separately |
+| Frontend | Same code; every call goes to port 8082 | Same code; each call goes to its service's port |
+| Developer console | One log stream | Logs and metrics for each service, side by side |
 
-The frontend is nearly identical in both. Only the base URLs differ, so the same pages work against either backend.
+The frontend is nearly identical in both. Only the base URLs differ.
 
 ---
 
@@ -38,9 +38,9 @@ The frontend is nearly identical in both. Only the base URLs differ, so the same
 
 ```
                  Browser (Vue 3 + Pinia)
-     /login    /        /orders     /admin      /dev
-        |        |          |           |          |
-        +--------+----------+-----------+----------+
+  /login  /  (shop)  /product/:id  /orders  /admin  /dev  /credits
+        |      |            |          |        |      |
+        +------+------------+----------+--------+------+
                               |
    +----------------+---------+--------+-----------------+
    |                |                  |                 |
@@ -51,19 +51,18 @@ UserServiceDB   E-CommDB          CartServiceDB     OrderServiceDB
                   +---- price lookup --+                 |
                   ^                                      |
                   +------- reserve / release stock ------+
-                  Cart Service and Order Service also ask
-                  User Service "who owns this token?"
+   Every service asks User Service "who owns this token?" before it acts.
 ```
 
 **Exercise 8 (monolith):**
 
 ```
 Browser (Vue 3 + Pinia)  --->  Spring Boot app :8082
-                                 |- user package    (login, tokens)
-                                 |- product package (catalogue, stock)
-                                 |- cart package    (per-user carts)
-                                 |- order package   (checkout, history)
-                                 |- dev package     (request log, metrics)
+                                 |- user package     (login, tokens, roles)
+                                 |- product package  (catalogue, reviews, stock)
+                                 |- cart package     (per-user carts, variants)
+                                 |- order package    (checkout, invoices, stats)
+                                 |- dev package      (request log, metrics)
                                  |
                               ShoppingCartDB (MongoDB)
 ```
@@ -74,37 +73,38 @@ Browser (Vue 3 + Pinia)  --->  Spring Boot app :8082
 
 | Service | Owns | Does not own |
 |---|---|---|
-| **User** (ass9 only) | Accounts, password hashes, login tokens, roles | Anything about products or carts |
-| **Product** | Catalogue, categories, prices, sale %, stock | Who is buying |
-| **Cart** | Each user's cart lines, sale price copied at add time | Stock levels (checked at checkout) |
-| **Order** | Placed orders, order history, the checkout steps | Product or user records (copied in or looked up) |
+| **User** (ass9 only) | Accounts, password hashes, login tokens, roles | Products, carts, orders |
+| **Product** | Catalogue, categories, prices, sale %, stock, sizes, colours, specs, reviews | Who is buying |
+| **Cart** | Each user's lines, with size and colour, and the sale price copied at add time | Stock levels (checked at checkout) |
+| **Order** | Orders, addresses, payment method, delivery fee, GST, invoice number, status | Product or user records (copied in or looked up) |
 
-In the monolith (ass8), the same four responsibilities exist as packages inside one app.
+In the monolith (ass8) the same four responsibilities are packages inside one app.
 
 ---
 
 ## 5. API endpoints
 
-Every endpoint that acts on a user needs `Authorization: Bearer <token>`. The token comes from `/api/auth/login`.
+Anything that acts on a user needs `Authorization: Bearer <token>`. The token comes from `/api/auth/login`.
 
-### User Service (ass9 `:8085`; in ass8 the same paths are on `:8082`)
+### User Service (ass9 `:8085`; ass8 the same paths on `:8082`)
 
 | Method | Path | Who | What it does |
 |---|---|---|---|
 | POST | `/api/auth/register` | Anyone | Creates a shopper account |
 | POST | `/api/auth/login` | Anyone | Returns `{ token, username, role }` |
-| GET | `/api/auth/me` | Any logged-in user | Returns who owns the token |
+| GET | `/api/auth/me` | Any logged-in user | Who owns the token (used by other services) |
 
 ### Product Service (ass9 `:8083`; ass8 `:8082`)
 
 | Method | Path | Who | What it does |
 |---|---|---|---|
 | GET | `/api/products` | Anyone | Lists products. Optional `?category=Audio` |
-| GET | `/api/products/{id}` | Anyone | One product |
+| GET | `/api/products/{id}` | Anyone | One product with sizes, colours, specs, description and reviews |
+| POST | `/api/products/{id}/reviews` | Logged-in shopper | Posts a review (rating 1 to 5, headline, text) |
 | POST | `/api/products` | Admin | Adds a product |
 | PUT | `/api/products/{id}` | Admin | Edits name, price, stock, category, sale % |
 | DELETE | `/api/products/{id}` | Admin | Removes a product |
-| POST | `/api/products/{id}/reserve` | Order service (ass9 only) | Takes stock during checkout. Returns 409 if stock is short |
+| POST | `/api/products/{id}/reserve` | Order service (ass9 only) | Takes stock during checkout. 409 if short |
 | POST | `/api/products/{id}/release` | Order service (ass9 only) | Puts stock back if checkout fails partway |
 
 ### Cart Service (ass9 `:8084`; ass8 `:8082`)
@@ -112,42 +112,56 @@ Every endpoint that acts on a user needs `Authorization: Bearer <token>`. The to
 | Method | Path | Who | What it does |
 |---|---|---|---|
 | GET | `/api/cart` | Logged-in user | Their cart |
-| POST | `/api/cart/add/{productId}` | Logged-in user | Adds one, or adds 1 to an existing line. Applies sale price |
+| POST | `/api/cart/add/{productId}` | Logged-in user | Body `{ "size", "colour" }` (optional). Same product in another size is a new line. Applies the sale price |
 | PUT | `/api/cart/{cartItemId}` | Logged-in user | Sets a quantity |
 | DELETE | `/api/cart/{cartItemId}` | Logged-in user | Removes one line |
-| DELETE | `/api/cart` | Logged-in user | Empties their cart |
+| DELETE | `/api/cart` | Logged-in user | Empties the cart |
 
 ### Order Service (ass9 `:8086`; ass8 `:8082`)
 
 | Method | Path | Who | What it does |
 |---|---|---|---|
-| POST | `/api/orders` | Logged-in user | Checkout: takes stock, saves the order, empties the cart |
-| GET | `/api/orders` | Logged-in user | Their order history, newest first |
+| POST | `/api/orders` | Logged-in user | Checkout. Body: `{ coupon, address: {name, phone, line1, city, state, pin}, payment: UPI / CARD / COD }`. Validates the address and coupon, takes stock, saves the invoice, empties the cart |
+| GET | `/api/orders` | Logged-in user | Their orders, newest first, with address, payment, fees, GST and invoice |
+| GET | `/api/orders/all` | Admin | Every order, with the customer's username |
+| GET | `/api/orders/stats` | Admin | Revenue, order count, average order value, status counts, last 14 days, top products |
+| PUT | `/api/orders/{id}/status` | Admin | Moves an order to PLACED, PACKED, SHIPPED or DELIVERED |
 
 ### Developer endpoints (for the console)
 
 | Method | Path | Services | What it shows |
 |---|---|---|---|
-| GET | `/api/dev/logs` | Product, Cart (ass9); one app (ass8) | The last 100 requests: method, path, status, time taken |
-| GET | `/api/dev/metrics` | Product, Cart (ass9); one app (ass8) | Total requests, errors, average time, uptime |
+| GET | `/api/dev/logs` | User, Product, Cart, Order (ass9); one app (ass8) | The last 100 requests: method, path, status, time taken |
+| GET | `/api/dev/metrics` | User, Product, Cart, Order (ass9); one app (ass8) | Total requests, errors, average time, uptime |
 
 ---
 
-## 6. End-to-end flow: a shopper buys a laptop
+## 6. Shopper experience
 
-1. **Sign in.** The shopper enters their username and password, or clicks the "Shopper" demo chip. The User service checks the password hash and returns a token. The browser saves the token, so a refresh keeps them signed in.
-2. **Browse.** The shop page loads products. Each card shows the sale price, the original price struck through, a discount badge, and stock warnings ("Only 3 left", "Out of stock").
-3. **Filter.** The shopper clicks a category chip. The page asks the Product service for `?category=Electronics`.
-4. **Add to cart.** The Cart service looks up the product price and sale %, works out the sale price, and saves the line with that price. If the item is already in the cart, only the quantity goes up.
-5. **Adjust.** The cart panel updates quantities and removes lines. Totals are worked out from the saved prices.
-6. **Checkout.** The Order service:
-   - reads the cart,
-   - takes stock for each line (if any line is short, it puts back the stock it already took and returns "Some items are out of stock"),
-   - saves the order with a snapshot of names, prices and quantities,
-   - empties the cart.
-7. **Confirmation.** The shopper sees "Order placed" with a short reference. Order history on the "My orders" page shows the purchase.
+**Shop (`/`)**
+- Hero banner and a deal bar with a countdown to midnight.
+- Category chips and a **Saved** filter that shows only wishlisted items.
+- **Gift finder**: a budget slider. Products over the budget are hidden.
+- **Recently viewed** strip, updated as you open products.
+- Product cards with a heart (save for later), a Compare checkbox (up to three), a sale badge, stock warnings, and Add to cart.
+- Cart panel: quantities, subtotal, coupon box (`SAVE10` = 10% off, `WELCOME20` = 20% off), a free-delivery meter (free over ₹5,000, otherwise ₹99), and GST shown as included.
+- **Compare tray** with a side-by-side table: price, list price, sale, category, stock.
+- **Checkout form**: delivery address (remembered for next time) and payment method (UPI, card, cash on delivery). The PIN must be six digits.
 
-**Under the hood in ass9:** step 4 is one HTTP call from Cart to Product. Step 6 is HTTP calls from Order to Cart (read), Product (reserve, release), and Cart (clear). Every service also checks the token with User.
+**Product page (`/product/:id`)**
+- Photo, rating, price with list price and sale %, tax note, and stock level.
+- **Size** and **colour** choices, saved on the cart line and the order.
+- Quantity, Add to cart, and Save for later.
+- Description, specification table, and warranty.
+- Customer reviews: average rating, a 5-to-1 star breakdown, the review list, and a form to write one.
+- Customers also viewed: other products in the same category.
+
+**My orders (`/orders`)**
+- Each order shows its invoice number, date, total, the address it shipped to, and a status pill.
+- **View details** opens the invoice: status tracker with expected delivery, shipping address, billing (same address) and payment method, every item with its size and colour, and the price breakdown (subtotal, coupon, delivery, total paid, GST included).
+- Per item: link to the product page, Save for later, and Add to cart. For the whole order: **Buy again** and **Print invoice**.
+
+**Photo credits (`/credits`)** lists the author, licence and source page of each product photo. The link is in the footer.
 
 ---
 
@@ -155,149 +169,181 @@ Every endpoint that acts on a user needs `Authorization: Bearer <token>`. The to
 
 | Role | Demo account | Can see | Can do |
 |---|---|---|---|
-| Shopper | `shopper` / `demo123` | Shop, My orders | Browse, cart, checkout |
-| Admin | `admin` / `demo123` | Shop, Admin | Everything a shopper does, plus manage inventory |
-| Developer | `developer` / `demo123` | Shop, Developer console | Watch logs and metrics, see service status |
+| Shopper | `shopper` and `shopper_asha`, `shopper_ravi`, ... / `demo123` | Shop, product pages, My orders | Browse, save, compare, cart, checkout, review |
+| Admin | `admin` / `demo123` | Admin dashboard, product pages | Sales charts, product performance, orders, stock, prices |
+| Developer | `developer` / `demo123` | Developer console, product pages | Watch logs and metrics for every service |
 
-Route guards in the browser hide pages a role should not open. The backend also checks roles on every write, so hiding a button is never the only protection.
+Route guards send each role to its own home page. The backend also checks roles on every admin write and read, so hiding a button is never the only protection.
 
 ---
 
 ## 8. Benefits for the admin
 
-The Admin page is an inventory table, not a form that you have to fill in again and again.
+The admin page is a working dashboard, not an inventory form.
 
-- **Add a product** with name, category, price, stock, and sale % in one row.
-- **Edit inline.** Click Edit and change name, category, price, sale %, or stock. Save or cancel.
-- **See stock at a glance.** Out-of-stock and low-stock badges show what needs restocking.
-- **Control prices and promotions.** Sale % is per product. The storefront shows the sale automatically and the cart keeps the price the shopper saw.
-- **Remove products** that are discontinued.
-- **No code changes or redeploys** are needed to add a product, change a price, or restock.
-- **Stock cannot go negative.** Checkout checks stock and fails cleanly with a clear message if an item sold out just before the shopper paid.
+- **Four KPI cards**: revenue, order count, average order value, and products low on stock.
+- **Revenue chart** for the last 14 days. Hover a bar for its revenue and order count.
+- **Order status** breakdown across all orders.
+- **Product performance** for every product: units sold, number of orders, revenue, a share bar, and stock.
+- **Orders table** with the customer's name and the amount paid (coupon shown). Change an order's status from a dropdown.
+- **Low-stock panel** listing products to restock, lowest first.
+- **Manage listings**: add a product with category, price, stock and sale %, edit inline, or delete.
+- **Stock cannot go negative.** Checkout checks stock and fails with a clear message when an item sold out just before payment.
+- **No redeploy is needed** to add a product, change a price, or move an order along.
 
 ---
 
 ## 9. Developer console and debugging
 
-The Developer page is for anyone who has to understand or change the system later.
-
-- **Live service map (ass9).** Shows the five parts of the system and whether each one answers. Dots turn green when a service responds and red when it does not. The check runs every 5 seconds.
-- **Request logs.** The last 100 requests, with method, path, status, and time taken, across the services.
-- **Metrics.** Total requests, error count, average response time, and uptime.
-- **Endpoint reference.** A list of every API endpoint, which service it belongs to, and what it does, so nobody needs to read controller code to find a route.
-- **Clear error messages.** Every failure returns a status code and a readable message ("Log in first", "Admins only", "Some items are out of stock"). The browser shows the message in a toast.
+- **Service map (ass9).** Shows each service and whether it answers, checked every five seconds.
+- **Request logs for every service.** The last 12 requests per service, with method, path, status, and time taken. Each service logs only its own requests, which is the trade-off microservices make against the monolith's single log.
+- **Metrics per service.** Requests, average time, error rate, and uptime.
+- **Endpoint reference.** Every endpoint, its service, and what it does.
+- **Readable errors.** Each failure returns a status and a message ("Log in first", "Admins only", "Add a delivery address with a 6-digit PIN", "That coupon code is not valid", "Some items are out of stock"). The browser shows it in a toast.
 
 **Where to look when something breaks:**
-- Login fails: check the User service on `:8085`, then the `users` collection.
-- Price looks wrong: check the sale % on the product, then the cart line (the price is copied when the item is added).
-- Checkout fails: the message says whether the cart was empty or stock ran out. Stock is put back automatically if checkout stops partway.
-- Something slow: the Developer page shows average time per request and the recent request list.
+- Login fails: the User service on `:8085`, then the `users` collection.
+- Price looks wrong: the sale % on the product, then the cart line (the price is copied when the item is added).
+- Checkout fails: the message says whether the address, coupon, cart or stock was the problem. Stock is returned automatically if checkout stops partway.
+- Order looks wrong: the order's invoice fields (subtotal, coupon, delivery fee, GST, total) are all stored on the order.
+- Something slow: the console shows average time per service and the recent request list.
 
 ---
 
 ## 10. What makes this different from a typical student store
 
-| Typical student e-commerce project | MaisonCart |
+| Typical student project | MaisonCart |
 |---|---|
-| Anyone can change anything | Roles on every API write, not just in the UI |
-| Price changes rewrite old carts and orders | Sale price is copied when the item is added, and orders keep a snapshot |
-| Stock goes negative or is never checked | Stock is reserved at checkout and returned if checkout fails partway |
-| Teacher has to read the code to see what happens | Developer console shows the live service map, requests, and metrics |
-| One design for everything | Same storefront works against a monolith or microservices |
+| Anyone can change anything | Roles checked on every admin API call |
+| Price changes rewrite old carts and orders | Sale price copied at add time; orders keep a snapshot of each line |
+| Stock goes negative or is never checked | Stock reserved at checkout and returned if checkout fails partway |
+| Order is just a total | Invoice with address, payment, delivery fee, coupon, GST and invoice number |
+| Same product, one line | Size and colour are part of the cart line and the order line |
+| Product page is a name and a price | Sizes, colours, specs, reviews, related items, and a review form |
+| No sales view | Revenue chart, order statuses, and per-product performance |
 | Login is decorative | Real tokens, demo accounts for each role, persisted session |
+| Stock photos or none | Open-licensed photos with credits on a Credits page |
 
-**Compared with large marketplaces:** we do not match their scale, recommendations, payments or delivery network. We do show the same core ideas (sessions, roles, stock safety, order history) in a form a developer can read end to end.
+**Compared with large marketplaces:** we do not match their scale, recommendations, payment network or delivery network. We do show the same core ideas (sessions, roles, stock safety, invoices, reviews, sales reporting) in code a developer can read end to end.
 
 ---
 
 ## 11. Testing
 
-### Automated tests (run with `./mvnw test`)
+### Automated tests (`./mvnw test`, all passing)
 
-| Test | Service | What it checks |
-|---|---|---|
-| `ProductControllerTest` (4 tests) | Product (ass9) | Listing products, getting one product, and that creating a product needs an admin token |
-| `CartServiceTest` (2 tests) | Cart (ass9) | A new product is added with its sale price applied. Adding an existing product only increases the quantity |
-| `CartServiceTest` (2 tests) | ass8 | Same two cart rules, inside the monolith |
+| Suite | Service | Tests | What it checks |
+|---|---|---|---|
+| `ProductControllerTest` | Product (ass9) | 4 | Listing, getting one product, and that creating a product needs an admin token |
+| `CartServiceTest` and context test | Cart (ass9) | 3 | A new product gets its sale price. Adding the same product again only raises quantity. The application starts |
+| `CartServiceTest` and context test | ass8 monolith | 3 | Same cart rules, inside the monolith |
+| User, Order | ass9 | 0 | Compile and run checked. No automated tests yet |
 
 ### Real-life use cases
 
+Checked means run against the live services with `curl` or the browser, and the result was seen.
+
 | # | Scenario | How it was checked | Status |
 |---|---|---|---|
-| 1 | Shopper logs in with correct password | Login API via curl, and UI with demo chip | Checked |
+| 1 | Shopper logs in with correct password | Login API, and the UI demo chip | Checked |
 | 2 | Wrong password is refused | Login API | Not yet run |
-| 3 | Shopper adds a sale item; price is discounted | Add-to-cart via curl (Laptop 55000 at 15% off = 46750) | Checked (ass8 and ass9) |
-| 4 | Adding the same item twice increases quantity | Unit test | Automated |
-| 5 | Shopper checks out and gets an order | Checkout via curl; order appears in history | Checked (ass8 and ass9) |
-| 6 | Shopper is refused without a token | Anonymous add returns 401 | Checked (ass8 and ass9) |
-| 7 | Checkout fails when stock is short and stock is restored | Curl: Webcam at 0 stock, checkout returned 409, Laptop stock unchanged, cart kept | Checked |
-| 8 | Non-admin cannot create or edit products | Curl: shopper gets 403 on create and edit, no token gets 401. Admin edit saved in UI | Checked |
-| 9 | Admin changes sale % and shopper sees it | Admin UI edit, then shop card showed -25% badge. Cart kept the old price, as designed | Checked (browser) |
-| 10 | Category filter shows only that category | Curl: `?category=Audio` and `?category=Fashion` return only matching products | Checked |
+| 3 | Sale price is applied at add to cart | Laptop 55000 at 15% = 46750 (ass8 and ass9) | Checked |
+| 4 | Same product again raises quantity | Unit test | Automated |
+| 5 | Checkout creates an order and empties the cart | Checkout via curl; order in history (ass8 and ass9) | Checked |
+| 6 | Anonymous shopper is refused | Add to cart and checkout without a token return 401 | Checked |
+| 7 | Checkout fails when stock is short and stock is restored | Webcam at 0 stock returned 409; Laptop stock and cart unchanged | Checked |
+| 8 | Non-admin cannot create, edit, or read admin data | Shopper gets 403 on product writes and `/api/orders/stats` | Checked |
+| 9 | Admin changes sale % and shopper sees it | Admin edit, then a -25% badge on the shop card. Cart keeps the price it had | Checked (browser) |
+| 10 | Category filter returns only that category | `?category=Audio` and `?category=Fashion` | Checked |
+| 11 | Same product in two sizes makes two cart lines and two order lines | Running Shoes size 9 and 10 (ass9); size 8 twice merged into one line of quantity 2 (ass8) | Checked |
+| 12 | Size and colour survive to the order | Order lines show size and colour (ass9 and ass8) | Checked |
+| 13 | Invalid PIN is refused at checkout | PIN of 2 digits returns 400 | Checked |
+| 14 | Coupon and delivery fee are applied | SAVE10 on 999 mat with 5% sale plus 99 delivery = 953.14 total, GST 145.39 included | Checked |
+| 15 | Review is saved on the product | Review posted, the review count grows, and the reviewer's name is shown | Checked |
+| 16 | Shopper's orders are linked to their own account | `shopper_asha` sees her 18 seeded orders | Checked |
+| 17 | Admin dashboard numbers come from the orders | Stats: revenue, count, average, 14 daily points, top products | Checked |
+| 18 | Admin status change moves an order along | Status update via API | Not yet run |
+| 19 | Photo credits page and footer link | Built; not yet checked in a browser | Not yet run |
+| 20 | Wishlist, compare, recently viewed, budget filter, coupon box | Built; click-through in the browser | Not yet run |
 
 ---
 
 ## 12. Ease of use and coding practices
 
 **For users**
-- Sign in, browse, buy, and see history without a manual.
-- Demo buttons on the login page for each role, so a tutor can try every role in seconds.
-- One consistent visual style across the storefront, admin, and developer pages.
+- Sign in, browse, buy, and see the invoice without a manual.
+- Demo buttons on the login page for each role.
+- One visual style across storefront, product page, orders, admin, and developer console.
 
 **For developers**
-- **Clear package layout.** Controllers only handle HTTP. Services hold the rules. Repositories talk to MongoDB.
-- **Small, named pieces.** Records for request and line shapes. One `AuthClient` (ass9) or `AuthService` (ass8) for every token check.
-- **Comments only where a reader would be stuck.** For example, why a stock check happens before saving an order.
-- **Errors use status codes.** Callers can tell "not found" from "forbidden" from "out of stock".
-- **Failure handling in checkout.** Stock is put back if checkout stops partway, so a failed order does not lose stock.
-- **Sensible defaults.** Ports, database names, and service URLs are in each `application.properties`. Nothing is hard-coded across services.
-- **Seed data on first start.** Products and demo accounts are created automatically on an empty database.
+- **Clear packages.** Controllers handle HTTP; services hold the rules; repositories talk to MongoDB.
+- **Small, named shapes.** Records for lines, addresses, checkout requests, and reviews.
+- **One auth check per service.** `AuthClient` (ass9) or `AuthService` (ass8).
+- **Comments where a reader would be stuck,** such as why stock is checked before an order is saved.
+- **Status codes that mean something.** 400 for bad input, 401 for no login, 403 for wrong role, 404, 409 for out of stock.
+- **Failure handling in checkout.** Reserved stock is returned if a later line fails.
+- **Money rounded at checkout** so totals match the invoice.
+- **Seed data and scripts.** The demo data script rebuilds products, shoppers, reviews and order history on any machine.
 
 ---
 
 ## 13. How to run it
 
-**Requirements:** JDK 21, Node 18+, MongoDB on `localhost:27017`.
+**Requirements:** JDK 21, Node 18+, MongoDB on `localhost:27017`, `mongosh`, and `python3`.
 
 **Exercise 8 (monolith)**
 1. `cd ass8/cart-backend && ./mvnw spring-boot:run` (port 8082)
 2. `cd ass8/cart-frontend && npm install && npm run dev`
-3. Open the URL Vite prints and sign in with a demo account.
+3. Load the demo data: `scripts/seed-demo-data.sh ass8`
+4. Open the URL Vite prints and sign in.
 
 **Exercise 9 (microservices)**
-1. Start each service in its own terminal: `user-service`, `product-service`, `cart-service`, `order-service` (each with `./mvnw spring-boot:run`).
+1. In four terminals, start `user-service`, `product-service`, `cart-service`, and `order-service` (each with `./mvnw spring-boot:run`).
 2. `cd ass9/cart-frontend && npm install && npm run dev`
-3. Open the URL Vite prints and sign in with a demo account.
+3. Load the demo data: `scripts/seed-demo-data.sh ass9`
+4. Open the URL Vite prints and sign in.
 
-**Demo accounts** (password for all: `demo123`): `shopper`, `admin`, `developer`.
+**Demo accounts** (password for all: `demo123`): `shopper`, `shopper_asha`, `shopper_ravi`, `shopper_meera`, `shopper_kiran`, `shopper_divya`, `shopper_arjun`, `shopper_priya`, `shopper_sahil`, `admin`, `developer`.
 
-On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for example `export JAVA_HOME=$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home`.
+**Product photos** come from `scripts/fetch-product-images.py`, which searches Wikimedia Commons and writes the photos and `credits.json` into both frontends. Run it again after adding a product that needs a photo, and add the product's search words to its list.
+
+On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for example `export JAVA_HOME=$(brew --prefix openjdk@21)`.
 
 ---
 
 ## 14. Known limits and next steps
 
-- **Payments are simulated.** Checkout places the order without a payment provider.
+- **Payments are simulated.** Checkout records the payment method and places the order. No payment provider is called.
 - **Passwords use SHA-256 for demo purposes.** A real store would use bcrypt or argon2.
-- **No API gateway.** The browser talks to each service directly. A gateway would be the next step for a production deployment, along with load balancing.
-- **Developer logs cover product and cart only (ass9).** The User and Order services do not expose logs yet.
-- **No automated end-to-end browser tests.** Use case 7 to 10 are manual for now.
+- **No API gateway.** The browser calls each service directly. A gateway would be the next step for production, along with load balancing.
+- **Reviews are not limited to buyers.** Any logged-in shopper can review. "Verified purchase" is shown as text on every review and is not checked against orders yet.
+- **Wishlist, recently viewed, compare and the budget filter live in this browser only** (localStorage). They do not follow the shopper to another device.
+- **Coupon codes are a fixed list** (`SAVE10`, `WELCOME20`) in the Order service. The shop previews the same two codes.
+- **Seeded orders are written straight into MongoDB** so they can carry past dates. Orders placed through the app are dated now.
+- **Admin-added products need a photo** from the photo script. Until then the storefront shows a broken image for that product.
+- **Developer logs are per service and live in each service's own database.** There is no central log store, which is the microservice trade-off the console shows.
+- **No automated browser tests.** Cases 18 to 20 are manual for now.
 
 ---
 
 ## 15. Notes for future developers
 
-- To add a product field, change the model, the controller's update method, and the admin form. The storefront reads from the same API.
-- To add a new role, add it to the seed data, the route guard in `router/index.js`, and the `requireAdmin`-style check in the service.
-- To add a new service in ass9, copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add a row to the endpoint table in the Developer page.
-- Keep the API paths the same across ass8 and ass9 so the frontend stays shared.
+- To add a product field: change the model, the create and update methods in the Product service, the admin form, and the product page. The storefront reads the same API.
+- To add a coupon: add the code and its percentage to `COUPONS` in the Order service's `CheckoutService`, and to the same list in the shop view.
+- To add a role: add it to the seed data, the route guard in `router/index.js`, and the admin check in the service.
+- To add a service in ass9: copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add it to the Developer page's service list.
+- Keep the API paths the same across ass8 and ass9 so the frontend stays shared. Copy shared views between the two frontends after editing.
 
-## Demo data
+---
+
+## Demo data and what the script builds
 
 `scripts/seed-demo-data.sh ass9` (or `ass8`) fills a running backend with:
 
-- 24 products across Electronics, Audio, Wearables, Photography, Gaming, Fashion, Home, Fitness and Stationery, each with sizes or colours where they apply, specs and reviews.
-- 8 shopper accounts (`shopper_asha`, ...), all with password `demo123`.
-- About 110 orders spread over 60 days, with delivery addresses, payment methods, coupons, GST and invoice numbers. These drive the admin revenue chart and the per-product performance table.
+- **24 products** across Electronics, Audio, Wearables, Photography, Gaming, Fashion, Home, Fitness, and Stationery. Each has a description, specs, sizes or colours where they apply, and 3 to 6 reviews from the shopper accounts.
+- **8 shopper accounts** (`shopper_asha` and others), password `demo123`.
+- **About 110 orders** over 60 days. Each has one of eight delivery addresses, a payment method, sometimes a coupon, a delivery fee, GST and an invoice number. These drive the revenue chart and the product performance table.
 
-Orders are written straight into MongoDB so they can carry past dates. Everything else goes through the API.
+Orders are written straight into MongoDB so they can carry past dates. Products, shoppers, reviews and orders are created the same way on each run without duplicating products.
+
+Product photos come from Wikimedia Commons (`scripts/fetch-product-images.py`). Each photo is under a Creative Commons or public-domain licence, and the Credits page lists the author, licence, and source page for each.
