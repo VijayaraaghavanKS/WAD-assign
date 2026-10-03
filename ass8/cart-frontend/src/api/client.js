@@ -1,52 +1,70 @@
-// Single place that knows the backend's base URL and every endpoint it
-// exposes. Keeping this centralized (instead of fetch() calls scattered
-// across components) is what lets the Developer Interface document the
-// exact same endpoints the User/Admin interfaces actually call.
-const BASE = 'http://localhost:8082/api'
+// One Spring Boot app, one port. The user, product, cart and order packages
+// live in the same process, so every API path is served from the same base URL.
+const API = 'http://localhost:8082/api'
 
-export const ENDPOINTS = [
-  { method: 'GET', path: '/api/products', desc: 'List all products' },
-  { method: 'POST', path: '/api/products', desc: 'Create a product (admin)' },
-  { method: 'PUT', path: '/api/products/{id}', desc: 'Update a product (admin)' },
-  { method: 'DELETE', path: '/api/products/{id}', desc: 'Delete a product (admin)' },
-  { method: 'GET', path: '/api/cart', desc: 'Get current cart items' },
-  { method: 'GET', path: '/api/cart/total', desc: 'Get cart total amount' },
-  { method: 'POST', path: '/api/cart/add/{productId}', desc: 'Add a product to the cart' },
-  { method: 'PUT', path: '/api/cart/{cartItemId}', desc: 'Update a cart item quantity' },
-  { method: 'DELETE', path: '/api/cart/{cartItemId}', desc: 'Remove one cart item' },
-  { method: 'DELETE', path: '/api/cart', desc: 'Clear the entire cart' },
-  { method: 'GET', path: '/api/dev/logs', desc: 'Last 100 request logs' },
-  { method: 'GET', path: '/api/dev/metrics', desc: 'Aggregate request metrics' },
-]
+const SESSION_KEY = 'shopcart-session'
+
+export function savedToken() {
+  try {
+    return JSON.parse(localStorage.getItem(SESSION_KEY))?.token ?? null
+  } catch {
+    return null
+  }
+}
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  })
-  if (!res.ok) throw new Error(`${options.method || 'GET'} ${path} failed: ${res.status}`)
+  const headers = { 'Content-Type': 'application/json' }
+  const token = savedToken()
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const res = await fetch(`${API}${path}`, { ...options, headers: { ...headers, ...options.headers } })
   const text = await res.text()
-  if (!text) return null
+  const data = text ? safeParse(text) : null
+  if (!res.ok) throw new Error(data?.message || data || `Request failed (${res.status})`)
+  return data
+}
+
+function safeParse(text) {
   try {
     return JSON.parse(text)
   } catch {
-    // Some endpoints (e.g. DELETE) return a plain-text confirmation, not JSON.
     return text
   }
 }
 
+const json = (body) => JSON.stringify(body)
+
 export const api = {
-  getProducts: () => request('/products'),
-  createProduct: (product) => request('/products', { method: 'POST', body: JSON.stringify(product) }),
-  updateProduct: (id, product) => request(`/products/${id}`, { method: 'PUT', body: JSON.stringify(product) }),
+  login: (username, password) => request('/auth/login', { method: 'POST', body: json({ username, password }) }),
+  register: (username, password) => request('/auth/register', { method: 'POST', body: json({ username, password }) }),
+
+  getProducts: (category) => request(`/products${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+  createProduct: (product) => request('/products', { method: 'POST', body: json(product) }),
+  updateProduct: (id, product) => request(`/products/${id}`, { method: 'PUT', body: json(product) }),
   deleteProduct: (id) => request(`/products/${id}`, { method: 'DELETE' }),
 
   getCart: () => request('/cart'),
   addToCart: (productId) => request(`/cart/add/${productId}`, { method: 'POST' }),
-  updateQuantity: (cartItemId, quantity) => request(`/cart/${cartItemId}`, { method: 'PUT', body: JSON.stringify({ quantity }) }),
+  updateQuantity: (cartItemId, quantity) => request(`/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
   removeItem: (cartItemId) => request(`/cart/${cartItemId}`, { method: 'DELETE' }),
-  clearCart: () => request('/cart', { method: 'DELETE' }),
+
+  placeOrder: () => request('/orders', { method: 'POST' }),
+  getOrders: () => request('/orders'),
 
   getLogs: () => request('/dev/logs'),
   getMetrics: () => request('/dev/metrics'),
 }
+
+// Shown on the Developer page as a reference of what the API exposes.
+export const ENDPOINTS = [
+  { service: 'Auth', method: 'POST', path: '/api/auth/login', desc: 'Log in, returns a session token' },
+  { service: 'Auth', method: 'GET', path: '/api/auth/me', desc: 'Who owns this token' },
+  { service: 'Products', method: 'GET', path: '/api/products?category=', desc: 'List products, optionally by category' },
+  { service: 'Products', method: 'POST', path: '/api/products', desc: 'Create a product (admin only)' },
+  { service: 'Products', method: 'PUT', path: '/api/products/{id}', desc: 'Update a product (admin only)' },
+  { service: 'Cart', method: 'GET', path: '/api/cart', desc: 'Get the logged-in user\'s cart' },
+  { service: 'Cart', method: 'POST', path: '/api/cart/add/{productId}', desc: 'Add to cart, applying any sale price' },
+  { service: 'Cart', method: 'DELETE', path: '/api/cart', desc: 'Clear the cart' },
+  { service: 'Orders', method: 'POST', path: '/api/orders', desc: 'Checkout: take stock, save order, clear cart' },
+  { service: 'Orders', method: 'GET', path: '/api/orders', desc: 'Order history for the logged-in user' },
+]

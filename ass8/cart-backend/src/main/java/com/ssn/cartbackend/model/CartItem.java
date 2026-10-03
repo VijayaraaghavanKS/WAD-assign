@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-// One document per product currently in the cart. Price/name are copied from
-// the Product at add-time so the cart still shows correct totals.
+// One row per (user, product). Name and sale price are copied from the Product
+// when the item is added, so later catalog edits don't change what's in the cart.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,8 +17,9 @@ public class CartItem {
     @Id
     private String id;
 
+    private String userId;
     private String productId;
     private String productName;
-    private double price;
+    private double price; // already discounted
     private int quantity;
 }

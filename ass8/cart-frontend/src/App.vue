@@ -1,22 +1,38 @@
 <script setup>
-import { nextTick, onMounted } from 'vue'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
-import { ShoppingCart, ShieldCheck, Code2, ShoppingBag, MapPin, Search } from 'lucide-vue-next'
+import { computed, nextTick, onMounted, watch } from 'vue'
+import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
+import { ShoppingCart, ShoppingBag, LogOut, Package, ShieldCheck, Activity } from 'lucide-vue-next'
 import { useCartStore } from './stores/cart'
+import { useAuthStore } from './stores/auth'
 
 const cart = useCartStore()
+const auth = useAuthStore()
 const router = useRouter()
-onMounted(() => cart.load())
+const route = useRoute()
 
-// A RouterLink to the current route is a no-op, so clicking the cart icon
-// while already on Shop did nothing. Navigate there first if needed, then
-// scroll the cart panel into view either way.
+// Load the cart once a shopper is signed in, and again whenever the session changes.
+watch(() => auth.isLoggedIn, (loggedIn) => loggedIn && cart.load(), { immediate: true })
+onMounted(() => auth.isLoggedIn && cart.load())
+
+// Links each role can see. Shop is open to everyone.
+const links = computed(() => {
+  const role = auth.role
+  const extra = { USER: [['/orders', Package, 'My orders']], ADMIN: [['/admin', ShieldCheck, 'Admin']], DEVELOPER: [['/dev', Activity, 'Developer']] }
+  return [['/', ShoppingBag, 'Shop'], ...(extra[role] ?? [])]
+})
+
+// A RouterLink to the current route does nothing, so the cart button goes to
+// Shop first (if needed) and then scrolls the cart panel into view.
 async function goToCart() {
-  if (router.currentRoute.value.path !== '/') {
-    await router.push('/')
-  }
+  if (route.path !== '/') await router.push('/')
   await nextTick()
   document.getElementById('cart-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+function logout() {
+  auth.logout()
+  cart.items = []
+  router.push('/login')
 }
 </script>
 
@@ -25,36 +41,34 @@ async function goToCart() {
     <header class="masthead">
       <div class="masthead-row">
         <RouterLink to="/" class="brand">
-          <ShoppingBag :size="26" />
-          <span>ShopCart</span>
+          <ShoppingBag :size="24" />
+          <span>Maison<em>Cart</em></span>
         </RouterLink>
 
-        <div class="deliver">
-          <MapPin :size="18" />
-          <div class="deliver-text">
-            <span class="deliver-label">Deliver to</span>
-            <span class="deliver-value">Chennai 600119</span>
-          </div>
-        </div>
+        <div class="spacer" />
 
-        <div class="search">
-          <input type="text" placeholder="Search ShopCart" />
-          <button type="button" aria-label="Search"><Search :size="18" /></button>
-        </div>
-
-        <button type="button" class="cart-link" @click="goToCart">
-          <span class="cart-icon-wrap">
-            <ShoppingCart :size="26" />
+        <template v-if="auth.isLoggedIn">
+          <button v-if="auth.role === 'USER'" type="button" class="cart-link" @click="goToCart">
+            <ShoppingCart :size="22" />
+            <span>Cart</span>
             <span class="cart-badge">{{ cart.itemCount }}</span>
-          </span>
-          <span class="cart-label">Cart</span>
-        </button>
+          </button>
+
+          <div class="session">
+            <span class="avatar">{{ auth.session.username[0].toUpperCase() }}</span>
+            <div>
+              <div class="session-name">{{ auth.session.username }}</div>
+              <div class="session-role">{{ auth.role.toLowerCase() }}</div>
+            </div>
+            <button type="button" class="logout" title="Log out" @click="logout"><LogOut :size="16" /></button>
+          </div>
+        </template>
       </div>
 
-      <nav class="subnav">
-        <RouterLink to="/" exact-active-class="active"><ShoppingBag :size="15" /> Shop</RouterLink>
-        <RouterLink to="/admin" exact-active-class="active"><ShieldCheck :size="15" /> Admin</RouterLink>
-        <RouterLink to="/dev" exact-active-class="active"><Code2 :size="15" /> Developer</RouterLink>
+      <nav v-if="auth.isLoggedIn" class="subnav">
+        <RouterLink v-for="[to, Icon, label] in links" :key="to" :to="to" exact-active-class="active">
+          <component :is="Icon" :size="15" /> {{ label }}
+        </RouterLink>
       </nav>
     </header>
 
@@ -63,292 +77,177 @@ async function goToCart() {
     </main>
 
     <footer class="site-footer">
-      <div class="footer-back-to-top">Back to top</div>
-      <div class="footer-body">
-        <span>ShopCart &mdash; ICS1511 Web Application Development Laboratory</span>
-      </div>
+      MaisonCart &mdash; ICS1511 Web Application Development Laboratory
     </footer>
   </div>
 </template>
 
 <style>
 :root {
-  --ink: #0f1111;
-  --ink-soft: #565959;
-  --paper: #ffffff;
-  --bg: #eaeded;
-  --navy-dark: #131921;
-  --navy: #232f3e;
-  --navy-light: #37475a;
-  --accent: #ff9900;
-  --accent-dark: #e88a00;
-  --link: #007185;
-  --link-hover: #c7511f;
-  --price: #b12704;
-  --star: #ffa41c;
-  --success: #067d62;
-  --success-bg: #d5f5e8;
-  --danger: #cc0c39;
-  --danger-bg: #fdeceb;
-  --border: #d5d9d9;
-  --radius: 8px;
-  --radius-sm: 4px;
-  --shadow-card: 0 2px 5px rgba(15, 17, 17, 0.15);
-  --shadow-raised: 0 8px 24px rgba(15, 17, 17, 0.18);
+  --ink: #2b211b;
+  --ink-soft: #6e5f55;
+  --paper: #fbf7f0;
+  --bg: #f4ede3;
+  --navy-dark: #2b211b;
+  --navy: #3a2d25;
+  --navy-light: #4d3e34;
+  --accent: #c2562f;
+  --accent-dark: #a8431f;
+  --olive: #6b7144;
+  --link: #8a3b1e;
+  --price: #2b211b;
+  --star: #d9822b;
+  --success: #4f5b2e;
+  --success-bg: #e6ebd6;
+  --danger: #b3261e;
+  --danger-bg: #f9e3df;
+  --border: #dccfbe;
+  --radius: 12px;
+  --radius-sm: 6px;
+  --shadow-card: 0 1px 2px rgba(43, 33, 27, 0.08), 0 4px 14px rgba(43, 33, 27, 0.06);
 }
 
 * { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
-  height: 100%;
-}
+html, body { margin: 0; height: 100%; }
 
 body {
-  font-family: 'Amazon Ember', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Instrument Sans', system-ui, sans-serif;
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
 
-#shell {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
+h1, h2, h3, .brand { font-family: 'Fraunces', Georgia, serif; }
 
-::selection {
-  background: var(--accent);
-  color: var(--navy-dark);
-}
+#shell { min-height: 100%; display: flex; flex-direction: column; }
 
-a:focus-visible, button:focus-visible, input:focus-visible {
-  outline: 3px solid #4c9aff;
+::selection { background: var(--accent); color: #fff; }
+
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid var(--olive);
   outline-offset: 2px;
 }
 
-/* ---------- Header ---------- */
-
-.masthead {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
+.masthead { position: sticky; top: 0; z-index: 40; }
 
 .masthead-row {
   background: var(--navy-dark);
-  color: white;
+  color: var(--paper);
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 10px 20px;
+  gap: 16px;
+  padding: 12px 28px;
 }
+
+.spacer { flex: 1; }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: white;
+  color: var(--paper);
   text-decoration: none;
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  flex-shrink: 0;
-  border: 1px solid transparent;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
+  letter-spacing: -0.01em;
 }
 
-.brand:hover {
-  border-color: white;
-}
-
-.deliver {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  color: white;
-  flex-shrink: 0;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  cursor: default;
-}
-
-.deliver:hover {
-  border-color: white;
-}
-
-.deliver-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
-.deliver-label {
-  font-size: 0.72rem;
-  color: #cbd2d9;
-}
-
-.deliver-value {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.search {
-  flex: 1;
-  display: flex;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  max-width: 780px;
-}
-
-.search input {
-  flex: 1;
-  border: none;
-  padding: 0 14px;
-  font-size: 0.95rem;
-  min-width: 0;
-}
-
-.search input:focus {
-  outline: none;
-}
-
-.search button {
-  width: 46px;
-  border: none;
-  background: var(--accent);
-  color: var(--navy-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.search button:hover {
-  background: var(--accent-dark);
-}
+.brand em { font-style: italic; color: var(--accent); }
 
 .cart-link {
+  position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  color: white;
-  text-decoration: none;
-  flex-shrink: 0;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
+  align-items: center;
+  gap: 8px;
   background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--paper);
   font: inherit;
+  font-weight: 600;
+  padding: 8px 12px;
   cursor: pointer;
 }
 
-.cart-link:hover {
-  border-color: white;
-}
-
-.cart-icon-wrap {
-  position: relative;
-  display: flex;
-}
+.cart-link:hover { border-color: rgba(251, 247, 240, 0.4); }
 
 .cart-badge {
-  position: absolute;
-  top: -8px;
-  left: 14px;
   background: var(--accent);
-  color: var(--navy-dark);
+  color: #fff;
   font-size: 0.72rem;
-  font-weight: 800;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  display: flex;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
+  padding: 0 6px;
 }
 
-.cart-label {
+.session { display: flex; align-items: center; gap: 10px; padding-left: 14px; border-left: 1px solid rgba(251, 247, 240, 0.18); }
+
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
   font-weight: 700;
-  font-size: 0.95rem;
 }
+
+.session-name { font-weight: 600; font-size: 0.92rem; line-height: 1.1; }
+.session-role { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: #d8c7b3; }
+
+.logout {
+  background: none; border: 1px solid rgba(251, 247, 240, 0.3); color: var(--paper);
+  border-radius: var(--radius-sm); padding: 6px; cursor: pointer; display: flex;
+}
+.logout:hover { background: var(--navy-light); }
 
 .subnav {
   background: var(--navy);
   display: flex;
   gap: 4px;
-  padding: 0 16px;
+  padding: 0 22px;
 }
 
 .subnav a {
-  color: #e7e9ea;
+  color: #e9dccb;
   text-decoration: none;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  padding: 10px 14px;
+  padding: 11px 14px;
   display: flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid transparent;
+  border-bottom: 3px solid transparent;
 }
 
-.subnav a:hover {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: var(--navy-light);
-}
-
-.subnav a.active {
-  color: var(--accent);
-}
-
-@media (min-width: 720px) {
-  .deliver { display: flex; }
-}
-
-/* ---------- Shared page chrome ---------- */
+.subnav a:hover { background: var(--navy-light); }
+.subnav a.active { color: #fff; border-bottom-color: var(--accent); }
 
 main {
   flex: 1;
-  max-width: 1500px;
+  max-width: 1320px;
   width: 100%;
   margin: 0 auto;
-  padding: 18px 18px 48px;
+  padding: 28px 24px 56px;
 }
 
 .site-footer {
-  background: var(--navy);
-  color: #cbd2d9;
+  background: var(--navy-dark);
+  color: #cbb9a4;
+  text-align: center;
+  padding: 22px;
+  font-size: 0.82rem;
   margin-top: auto;
 }
 
-.footer-back-to-top {
-  background: var(--navy-light);
-  text-align: center;
-  padding: 14px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.footer-back-to-top:hover {
-  background: #485769;
-}
-
-.footer-body {
-  text-align: center;
-  padding: 20px;
-  font-size: 0.8rem;
-}
-
-/* ---------- Shared component primitives ---------- */
-
+/* Shared buttons and pills used by every page */
 .btn {
   border: 1px solid transparent;
-  border-radius: 100px;
+  border-radius: 999px;
+  font: inherit;
   font-weight: 600;
   font-size: 0.92rem;
   cursor: pointer;
@@ -356,67 +255,31 @@ main {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 9px 18px;
-  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  padding: 10px 20px;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.btn-cart {
-  background: linear-gradient(to bottom, #f7dfa5, #f0c14b);
-  border-color: #a88734;
-  color: #0f1111;
-}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
 
-.btn-cart:hover {
-  background: linear-gradient(to bottom, #f5d78e, #eeb933);
-}
+.btn-outline { background: #fff; border-color: var(--border); color: var(--ink); }
+.btn-outline:hover { border-color: var(--ink-soft); }
 
-.btn-buy {
-  background: linear-gradient(to bottom, #f5a04a, #ff9900);
-  border-color: #cc7b00;
-  color: #0f1111;
-}
-
-.btn-buy:hover {
-  background: linear-gradient(to bottom, #f0952f, #e88a00);
-}
-
-.btn-outline {
-  background: white;
-  border-color: var(--border);
-  color: var(--ink);
-}
-
-.btn-outline:hover {
-  background: #f7f8f8;
-  border-color: #b0b4b4;
-}
-
-.btn-danger-outline {
-  background: white;
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.btn-danger-outline:hover {
-  background: var(--danger-bg);
-}
+.btn-danger-outline { background: #fff; border-color: var(--danger); color: var(--danger); }
+.btn-danger-outline:hover { background: var(--danger-bg); }
 
 .pill {
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 10px;
+  padding: 3px 10px;
   display: inline-flex;
   align-items: center;
 }
 
 .pill-success { background: var(--success-bg); color: var(--success); }
 .pill-danger { background: var(--danger-bg); color: var(--danger); }
+.pill-warn { background: #f6e7cf; color: var(--accent-dark); }
 
-.stars {
-  color: var(--star);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
+.stars { color: var(--star); display: inline-flex; align-items: center; gap: 2px; }
 </style>

@@ -4,56 +4,54 @@ import com.ssn.cartbackend.model.CartItem;
 import com.ssn.cartbackend.model.Product;
 import com.ssn.cartbackend.repository.CartRepository;
 import com.ssn.cartbackend.repository.ProductRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
 public class CartService {
 
-    private final CartRepository cartRepository;
-    private final ProductRepository productRepository;
+    private final CartRepository carts;
+    private final ProductRepository products;
 
-    public CartService(CartRepository cartRepository, ProductRepository productRepository) {
-        this.cartRepository = cartRepository;
-        this.productRepository = productRepository;
+    public CartService(CartRepository carts, ProductRepository products) {
+        this.carts = carts;
+        this.products = products;
     }
 
-    public List<CartItem> getCart() {
-        return cartRepository.findAll();
+    public List<CartItem> getCart(String userId) {
+        return carts.findByUserId(userId);
     }
 
-    public double getTotal() {
-        return cartRepository.findAll().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
-    }
-
-    // Adding a product that's already in the cart just bumps its quantity
-    // instead of creating a duplicate cart row.
-    public CartItem addToCart(String productId) {
-        CartItem existing = cartRepository.findByProductId(productId);
+    // A new product copies name and sale price from the catalog. An existing one only gets +1.
+    public CartItem addToCart(String userId, String productId) {
+        CartItem existing = carts.findByUserIdAndProductId(userId, productId);
         if (existing != null) {
             existing.setQuantity(existing.getQuantity() + 1);
-            return cartRepository.save(existing);
+            return carts.save(existing);
         }
 
-        Product product = productRepository.findById(productId).orElseThrow();
-        CartItem item = new CartItem(null, product.getId(), product.getName(), product.getPrice(), 1);
-        return cartRepository.save(item);
+        Product product = products.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No such product"));
+        double salePrice = product.getPrice() * (100 - product.getDiscountPercent()) / 100.0;
+        return carts.save(new CartItem(null, userId, product.getId(), product.getName(), salePrice, 1));
     }
 
-    public CartItem updateQuantity(String cartItemId, int quantity) {
-        CartItem item = cartRepository.findById(cartItemId).orElseThrow();
+    public CartItem updateQuantity(String userId, String cartItemId, int quantity) {
+        CartItem item = carts.findById(cartItemId)
+                .filter(i -> i.getUserId().equals(userId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No such cart item"));
         item.setQuantity(quantity);
-        return cartRepository.save(item);
+        return carts.save(item);
     }
 
-    public void removeItem(String cartItemId) {
-        cartRepository.deleteById(cartItemId);
+    public void removeItem(String userId, String cartItemId) {
+        carts.deleteByIdAndUserId(cartItemId, userId);
     }
 
-    public void clearCart() {
-        cartRepository.deleteAll();
+    public void clearCart(String userId) {
+        carts.deleteByUserId(userId);
     }
 }
