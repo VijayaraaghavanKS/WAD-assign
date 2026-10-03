@@ -1,12 +1,14 @@
 package com.ssn.productservice.controller;
 
 import com.ssn.productservice.model.Product;
+import com.ssn.productservice.model.Review;
 import com.ssn.productservice.repository.ProductRepository;
 import com.ssn.productservice.security.AuthClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -66,6 +68,24 @@ public class ProductController {
     }
 
     // Internal: Order Service calls this at checkout. Fails with 409 if stock ran out.
+    // Any logged-in shopper can review a product. One review is added per call.
+    @PostMapping("/{id}/reviews")
+    public Product addReview(@RequestHeader(value = "Authorization", required = false) String authorization,
+                             @PathVariable String id, @RequestBody Map<String, Object> body) {
+        Map<String, String> user = auth.currentUser(authorization);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Log in to review");
+        }
+        int rating = ((Number) body.getOrDefault("rating", 0)).intValue();
+        if (rating < 1 || rating > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be 1 to 5");
+        }
+        Product product = getProduct(id);
+        product.getReviews().add(0, new Review(user.get("username"), rating,
+                String.valueOf(body.getOrDefault("title", "")), String.valueOf(body.getOrDefault("body", "")), Instant.now()));
+        return repository.save(product);
+    }
+
     @PostMapping("/{id}/reserve")
     public Product reserve(@PathVariable String id, @RequestBody Map<String, Integer> body) {
         return changeStock(id, -body.get("quantity"));

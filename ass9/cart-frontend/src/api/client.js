@@ -42,6 +42,8 @@ export const api = {
   login: (username, password) => request(USER_API, '/auth/login', { method: 'POST', body: json({ username, password }) }),
   register: (username, password) => request(USER_API, '/auth/register', { method: 'POST', body: json({ username, password }) }),
 
+  getProduct: (id) => request(PRODUCT_API, `/products/${id}`),
+  addReview: (id, review) => request(PRODUCT_API, `/products/${id}/reviews`, { method: 'POST', body: json(review) }),
   getProducts: (category) => request(PRODUCT_API, `/products${category ? `?category=${encodeURIComponent(category)}` : ''}`),
   createProduct: (product) => request(PRODUCT_API, '/products', { method: 'POST', body: json(product) }),
   updateProduct: (id, product) => request(PRODUCT_API, `/products/${id}`, { method: 'PUT', body: json(product) }),
@@ -52,13 +54,21 @@ export const api = {
   updateQuantity: (cartItemId, quantity) => request(CART_API, `/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
   removeItem: (cartItemId) => request(CART_API, `/cart/${cartItemId}`, { method: 'DELETE' }),
 
-  placeOrder: () => request(ORDER_API, '/orders', { method: 'POST' }),
+  // body: { coupon, address: { name, phone, line1, city, state, pin }, payment: 'UPI' | 'CARD' | 'COD' }
+  placeOrder: (body) => request(ORDER_API, '/orders', { method: 'POST', body: json(body) }),
   getOrders: () => request(ORDER_API, '/orders'),
+  getAllOrders: () => request(ORDER_API, '/orders/all'),
+  getOrderStats: () => request(ORDER_API, '/orders/stats'),
+  setOrderStatus: (id, status) => request(ORDER_API, `/orders/${id}/status`, { method: 'PUT', body: json({ status }) }),
 
+  getUserServiceLogs: () => request(USER_API, '/dev/logs'),
+  getUserServiceMetrics: () => request(USER_API, '/dev/metrics'),
   getProductServiceLogs: () => request(PRODUCT_API, '/dev/logs'),
   getProductServiceMetrics: () => request(PRODUCT_API, '/dev/metrics'),
   getCartServiceLogs: () => request(CART_API, '/dev/logs'),
   getCartServiceMetrics: () => request(CART_API, '/dev/metrics'),
+  getOrderServiceLogs: () => request(ORDER_API, '/dev/logs'),
+  getOrderServiceMetrics: () => request(ORDER_API, '/dev/metrics'),
 
   // Used by the service map: any HTTP answer (even 401) means the service is up.
   ping: (base) => fetch(base, { method: 'GET' }).then(() => true, () => false),
@@ -76,6 +86,10 @@ export const ENDPOINTS = [
   { service: 'Cart Service :8084', method: 'GET', path: '/api/cart', desc: 'Get the logged-in user\'s cart' },
   { service: 'Cart Service :8084', method: 'POST', path: '/api/cart/add/{productId}', desc: 'Add to cart, applying any sale price' },
   { service: 'Cart Service :8084', method: 'DELETE', path: '/api/cart', desc: 'Clear the cart' },
-  { service: 'Order Service :8086', method: 'POST', path: '/api/orders', desc: 'Checkout: reserve stock, save order, clear cart' },
+  { service: 'Order Service :8086', method: 'POST', path: '/api/orders', desc: 'Checkout: reserve stock, apply coupon, save order, clear cart' },
   { service: 'Order Service :8086', method: 'GET', path: '/api/orders', desc: 'Order history for the logged-in user' },
+  { service: 'Product Service :8083', method: 'GET', path: '/api/products/{id}', desc: 'One product with sizes, colours, specs and reviews' },
+  { service: 'Product Service :8083', method: 'POST', path: '/api/products/{id}/reviews', desc: 'Post a review (logged-in shopper)' },
+  { service: 'Order Service :8086', method: 'GET', path: '/api/orders/stats', desc: 'Sales totals and chart data (admin only)' },
+  { service: 'Order Service :8086', method: 'PUT', path: '/api/orders/{id}/status', desc: 'Move an order PLACED, PACKED, SHIPPED, DELIVERED (admin only)' },
 ]
