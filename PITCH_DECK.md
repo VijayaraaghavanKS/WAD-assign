@@ -230,12 +230,10 @@ The Developer page is for anyone who has to understand or change the system late
 | 4 | Adding the same item twice increases quantity | Unit test | Automated |
 | 5 | Shopper checks out and gets an order | Checkout via curl; order appears in history | Checked (ass8 and ass9) |
 | 6 | Shopper is refused without a token | Anonymous add returns 401 | Checked (ass8 and ass9) |
-| 7 | Checkout fails when stock is short and stock is restored | Not yet run | To test |
-| 8 | Non-admin cannot create or edit products | Admin check in code; create test covers admin path | Partly automated |
-| 9 | Admin changes stock and sale % and shopper sees it | Admin UI and shop UI | To test in browser |
-| 10 | Category filter shows only that category | Product API `?category=` | To test in browser |
-
-Scenarios 7 to 10 are the next things to check before submitting.
+| 7 | Checkout fails when stock is short and stock is restored | Curl: Webcam at 0 stock, checkout returned 409, Laptop stock unchanged, cart kept | Checked |
+| 8 | Non-admin cannot create or edit products | Curl: shopper gets 403 on create and edit, no token gets 401. Admin edit saved in UI | Checked |
+| 9 | Admin changes sale % and shopper sees it | Admin UI edit, then shop card showed -25% badge. Cart kept the old price, as designed | Checked (browser) |
+| 10 | Category filter shows only that category | Curl: `?category=Audio` and `?category=Fashion` return only matching products | Checked |
 
 ---
 
