@@ -291,3 +291,13 @@ On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for exam
 - To add a new role, add it to the seed data, the route guard in `router/index.js`, and the `requireAdmin`-style check in the service.
 - To add a new service in ass9, copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add a row to the endpoint table in the Developer page.
 - Keep the API paths the same across ass8 and ass9 so the frontend stays shared.
+
+## Demo data
+
+`scripts/seed-demo-data.sh ass9` (or `ass8`) fills a running backend with:
+
+- 24 products across Electronics, Audio, Wearables, Photography, Gaming, Fashion, Home, Fitness and Stationery, each with sizes or colours where they apply, specs and reviews.
+- 8 shopper accounts (`shopper_asha`, ...), all with password `demo123`.
+- About 110 orders spread over 60 days, with delivery addresses, payment methods, coupons, GST and invoice numbers. These drive the admin revenue chart and the per-product performance table.
+
+Orders are written straight into MongoDB so they can carry past dates. Everything else goes through the API.
