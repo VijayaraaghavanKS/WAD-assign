@@ -19,3 +19,11 @@ __pycache__/
 # IDE
 .vscode/
 .idea/
+
+# Third-party skill packs kept locally (not coursework)
+impeccable-skill-v4.1.2/
+ui-ux-pro-max-skill-2.15.0/
+ui-redesign/
+
+# Spring Boot generated boilerplate
+HELP.md
