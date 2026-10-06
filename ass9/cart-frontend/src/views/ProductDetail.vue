@@ -25,6 +25,8 @@ const toast = ref('')
 const review = ref({ rating: 5, title: '', body: '' })
 
 const isShopper = computed(() => auth.role === 'USER')
+// Guests can buy too: their cart is kept in the browser until they sign in to check out.
+const canBuy = computed(() => !auth.isLoggedIn || isShopper.value)
 const salePrice = computed(() => Math.round(product.value.price * (100 - (product.value.discountPercent || 0)) / 100))
 const reviews = computed(() => product.value?.reviews ?? [])
 const avgRating = computed(() => (reviews.value.length ? reviews.value.reduce((s, r) => s + r.rating, 0) / reviews.value.length : 0))
@@ -125,7 +127,7 @@ watch(() => route.params.id, load)
         <p v-else-if="product.quantity <= 5" class="stock low">Only {{ product.quantity }} left in stock</p>
         <p v-else class="stock">In stock</p>
 
-        <template v-if="isShopper">
+        <template v-if="canBuy">
           <div class="buy-actions">
             <label class="qty">Qty
               <select v-model.number="qty"><option v-for="n in 5" :key="n" :value="n">{{ n }}</option></select>

@@ -39,7 +39,7 @@ class CartServiceTest {
     void addToCart_newProduct_appliesDiscountAndSaves() {
         when(cartRepository.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(null);
         when(restTemplate.getForObject(eq("http://localhost:8083/api/products/p1"), eq(ProductDto.class)))
-                .thenReturn(new ProductDto("p1", "Laptop", 50000, 10));
+                .thenReturn(new ProductDto("p1", "Laptop", 50000, 10, 5));
         when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CartItem result = cartService.addToCart("u1", "p1");
@@ -50,14 +50,15 @@ class CartServiceTest {
     }
 
     @Test
-    void addToCart_existingProduct_skipsProductServiceCall() {
+    void addToCart_existingProduct_bumpsQuantity() {
         CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 1, null, null);
         when(cartRepository.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(existing);
+        when(restTemplate.getForObject(eq("http://localhost:8083/api/products/p1"), eq(ProductDto.class)))
+                .thenReturn(new ProductDto("p1", "Laptop", 50000, 10, 5));
         when(cartRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CartItem result = cartService.addToCart("u1", "p1");
 
         assertThat(result.getQuantity()).isEqualTo(2);
-        verify(restTemplate, never()).getForObject(any(String.class), eq(ProductDto.class));
     }
 }

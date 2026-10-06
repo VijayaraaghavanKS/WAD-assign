@@ -144,9 +144,13 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 - **Gift finder**: a budget slider. Products over the budget are hidden.
 - **Recently viewed** strip, updated as you open products.
 - Product cards with a heart (save for later), a Compare checkbox (up to three), a sale badge, stock warnings, and Add to cart.
-- Cart panel: quantities, subtotal, coupon box (`SAVE10` = 10% off, `WELCOME20` = 20% off), a free-delivery meter (free over ₹5,000, otherwise ₹99), and GST shown as included.
+- **Floating cart** at the bottom right shows the item count and total. Click it for a quick preview, then **View cart**. The header Cart link goes to the same page.
 - **Compare tray** with a side-by-side table: price, list price, sale, category, stock.
 - **Checkout form**: delivery address (remembered for next time) and payment method (UPI, card, cash on delivery). The PIN must be six digits.
+
+**My cart (`/cart`)**
+- A full page: each line shows the photo, name, size and colour, unit price, quantity stepper, save for later, and remove.
+- Order summary: coupon box (`SAVE10` = 10% off, `WELCOME20` = 20% off), a free-delivery meter (free over ₹5,000, otherwise ₹99), the total, and GST shown as included. Checkout opens from here.
 
 **Product page (`/product/:id`)**
 - Photo, rating, price with list price and sale %, tax note, and stock level.
@@ -160,6 +164,12 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 - Each order shows its invoice number, date, total, the address it shipped to, and a status pill.
 - **View details** opens the invoice: status tracker with expected delivery, shipping address, billing (same address) and payment method, every item with its size and colour, and the price breakdown (subtotal, coupon, delivery, total paid, GST included).
 - Per item: link to the product page, Save for later, and Add to cart. For the whole order: **Buy again** and **Print invoice**.
+
+**Browsing without an account**
+- The shop, product pages, offers and the cart are open to guests. A guest's cart is kept in the browser and moved into their account when they sign in.
+- Checkout is the only step that asks for a sign-in. The cart then says so, and the shopper returns to the cart after signing in.
+
+**Offers (`/offers`)** lists the coupon codes the Order Service really accepts (`SAVE10`, `WELCOME20`), each as a ticket with its terms, a copy button, and a "Use at cart" link. That link applies the code and shows the saving before payment. Standing terms (free delivery over ₹5,000, cash on delivery, GST inside the price) sit below.
 
 **Photo credits (`/credits`)** lists the author, licence and source page of each product photo. The link is in the footer.
 
@@ -184,10 +194,10 @@ The admin page is a working dashboard, not an inventory form.
 - **Four KPI cards**: revenue, order count, average order value, and products low on stock.
 - **Revenue chart** for the last 14 days. Hover a bar for its revenue and order count.
 - **Order status** breakdown across all orders.
-- **Product performance** for every product: units sold, number of orders, revenue, a share bar, and stock.
+- **Products, stock and performance** in one table: each product's price, sale %, stock, units sold, and revenue. Expand a row to see its orders, average order value, and share of revenue.
 - **Orders table** with the customer's name and the amount paid (coupon shown). Change an order's status from a dropdown.
 - **Low-stock panel** listing products to restock, lowest first.
-- **Manage listings**: add a product with category, price, stock and sale %, edit inline, or delete.
+- **Manage listings** in the same table: add a product with category, price, stock and sale %, edit inline, or delete.
 - **Stock cannot go negative.** Checkout checks stock and fails with a clear message when an item sold out just before payment.
 - **No redeploy is needed** to add a product, change a price, or move an order along.
 
@@ -333,6 +343,59 @@ On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for exam
 - To add a role: add it to the seed data, the route guard in `router/index.js`, and the admin check in the service.
 - To add a service in ass9: copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add it to the Developer page's service list.
 - Keep the API paths the same across ass8 and ass9 so the frontend stays shared. Copy shared views between the two frontends after editing.
+
+---
+
+## 16. Code map: where the key pieces live
+
+Use this to find the code behind each idea in the deck. Paths are from the repo root.
+
+### CORS (cross-origin requests)
+
+The browser runs on Vite's dev port and calls each backend on another port, so every backend allows cross-origin calls. There is no global CORS config: each controller carries `@CrossOrigin(origins = "*")`.
+
+- **ass8 (one backend):** `ass8/cart-backend/src/main/java/com/ssn/cartbackend/controller/` (`AuthController`, `CartController`, `ProductController`, `OrderController`, `DevController`).
+- **ass9 (four services):** `ass9/user-service/.../controller/AuthController.java` and `DevController.java`; `ass9/product-service/.../controller/ProductController.java` and `DevController.java`; `ass9/cart-service/.../controller/CartController.java` and `DevController.java`; `ass9/order-service/.../controller/OrderController.java` and `DevController.java`.
+- A path with no handler (such as a bare `GET /api`) gets no CORS header, so the browser cannot read its reply. The service map therefore probes `/dev/metrics` in `ass9/cart-frontend/src/api/client.js` (`ping`).
+
+### HTTP calls between services (RestTemplate)
+
+Only ass9 makes HTTP calls between services. ass8 calls its own repositories directly.
+
+- **Bean definitions:** `ass9/cart-service/src/main/java/com/ssn/cartservice/config/AppConfig.java` and `ass9/order-service/src/main/java/com/ssn/orderservice/OrderServiceApplication.java`.
+- **Cart to Product (price lookup):** `ass9/cart-service/.../service/CartService.java`, `fetchProduct()`, which calls `GET /api/products/{id}`. The same file's `requireStock()` enforces stock on add and on quantity increase.
+- **Order to Cart and Product (checkout):** `ass9/order-service/.../service/CheckoutService.java`. It reads the cart (`GET /api/cart`), reserves stock per line (`POST /api/products/{id}/reserve`), releases it on failure (`/release`), and clears the cart (`DELETE /api/cart`).
+- **Every service to User (who is calling):** `AuthClient.java` in each service's `security/` folder. It calls `GET /api/auth/me` with the caller's token, and the URL comes from `user.service.url` in `application.properties`.
+
+### Pinia stores (frontend state)
+
+Each store is defined with `defineStore` in `cart-frontend/src/stores/`. ass8 and ass9 have the same three.
+
+- **`auth.js`:** who is signed in, and their role. The router guard and the header read it.
+- **`cart.js`:** the cart lines, the count and the total. It has a guest path that keeps the cart in `localStorage` (`shopcart-guest-cart`) and a server path. `mergeGuest()` moves the guest cart to the server at sign-in.
+- **`shopper.js`:** the shopper's saved items, recently viewed products, compare list and saved addresses. All of this lives in this browser.
+
+Views read the stores directly. Components do not receive data through props.
+
+### Props and emits (component communication)
+
+The frontend has no `defineProps` or `defineEmits`, and no `$emit`. The one component, `ass9/cart-frontend/src/components/ServiceMap.vue`, reads its data from its own script. The views are full pages, so they share state through Pinia and the router, not through parent/child events.
+
+### Routes and the router guard
+
+`cart-frontend/src/router/index.js` (ass8 and ass9 are the same). Shoppers can browse without signing in. `meta.roles` restricts pages to a role, and `meta.shopper` sends staff back to their own home page. Sign-in is needed only at checkout.
+
+### Where to find a feature
+
+| Feature | ass8 | ass9 |
+|---|---|---|
+| Cart page and floating cart | `ass8/cart-frontend/src/views/Cart.vue`, `App.vue` | `ass9/cart-frontend/src/views/Cart.vue`, `App.vue` |
+| Offers and coupons | `ass8/cart-frontend/src/views/Offers.vue` | `ass9/cart-frontend/src/views/Offers.vue` |
+| Stock check on add-to-cart | `ass8/cart-backend/.../service/CartService.java` | `ass9/cart-service/.../service/CartService.java` |
+| Coupon percentages | `ass8/cart-backend/.../service/CheckoutService.java` | `ass9/order-service/.../service/CheckoutService.java` (`COUPONS`) |
+| Admin product table | `ass8/cart-frontend/src/views/Admin.vue` | `ass9/cart-frontend/src/views/Admin.vue` |
+| Developer console | `ass8/cart-frontend/src/views/Developer.vue` (one log stream) | `ass9/cart-frontend/src/views/Developer.vue`, `components/ServiceMap.vue` |
+| Demo shopper list on login | `ass8/cart-frontend/src/views/Login.vue` | `ass9/cart-frontend/src/views/Login.vue` |
 
 ---
 

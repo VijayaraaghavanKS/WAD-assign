@@ -71,8 +71,9 @@ export const api = {
   getOrderServiceLogs: () => request(ORDER_API, '/dev/logs'),
   getOrderServiceMetrics: () => request(ORDER_API, '/dev/metrics'),
 
-  // Used by the service map: any HTTP answer (even 401) means the service is up.
-  ping: (base) => fetch(base, { method: 'GET' }).then(() => true, () => false),
+  // Used by the service map: any HTTP answer means the service is up. no-cors lets the
+  // reply through even when the service sends no CORS headers for that path.
+  ping: (base) => fetch(`${base}/dev/metrics`, { mode: 'no-cors', cache: 'no-store' }).then(() => true, () => false),
   services: { USER_API, PRODUCT_API, CART_API, ORDER_API },
 }
 

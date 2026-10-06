@@ -13,16 +13,16 @@ const password = ref('')
 const error = ref('')
 const busy = ref(false)
 
-// Demo accounts seeded by User Service, one per role.
+// Demo accounts seeded by User Service. Every demo password is demo123.
 const demoAccounts = [
-  { role: 'Shopper', username: 'shopper', hint: 'Browse, cart and checkout' },
   { role: 'Admin', username: 'admin', hint: 'Manage products and stock' },
   { role: 'Developer', username: 'developer', hint: 'Live service map and logs' },
 ]
+const shopperAccounts = ['shopper', 'shopper_asha', 'shopper_ravi', 'shopper_meera', 'shopper_kiran', 'shopper_divya', 'shopper_arjun', 'shopper_priya', 'shopper_sahil']
 
-function useDemo(account) {
+function useDemo(name) {
   mode.value = 'signin'
-  username.value = account.username
+  username.value = name
   password.value = 'demo123'
 }
 
@@ -63,11 +63,18 @@ async function submit() {
       </form>
 
       <div class="demo">
-        <span>Try a demo role</span>
-        <button v-for="a in demoAccounts" :key="a.username" type="button" class="demo-chip" @click="useDemo(a)">
+        <span>Demo staff accounts</span>
+        <button v-for="a in demoAccounts" :key="a.username" type="button" class="demo-chip" @click="useDemo(a.username)">
           <strong>{{ a.role }}</strong>
           <small>{{ a.hint }}</small>
         </button>
+      </div>
+
+      <div class="demo">
+        <span>Demo shopper accounts · password demo123</span>
+        <div class="shoppers">
+          <button v-for="name in shopperAccounts" :key="name" type="button" class="shopper-chip" @click="useDemo(name)">{{ name }}</button>
+        </div>
       </div>
     </div>
   </section>
@@ -120,6 +127,12 @@ button:disabled { opacity: 0.6; cursor: wait; }
 }
 .demo-chip:hover { border-color: var(--accent); }
 .demo-chip small { color: var(--ink-soft); }
+.shoppers { display: flex; flex-wrap: wrap; gap: 6px; }
+.shopper-chip {
+  font: inherit; font-size: 0.82rem; background: #fff; border: 1px solid var(--border);
+  border-radius: 999px; padding: 5px 11px; cursor: pointer;
+}
+.shopper-chip:hover { border-color: var(--accent); }
 
 @media (max-width: 820px) {
   .login { grid-template-columns: 1fr; }

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
-import { PackagePlus, Pencil, Trash2, Check, X, LayoutGrid, Boxes, TrendingUp, ShoppingBag, Wallet, TriangleAlert } from 'lucide-vue-next'
+import { PackagePlus, Pencil, Trash2, Check, X, LayoutGrid, Boxes, TrendingUp, ShoppingBag, Wallet, TriangleAlert, ChevronDown } from 'lucide-vue-next'
 import { api } from '../api/client'
 import { getProductImage } from '../utils/productImage'
 
@@ -14,8 +14,10 @@ const error = ref('')
 const newProduct = reactive({ name: '', price: null, quantity: null, category: '', discountPercent: 0 })
 const editingId = ref(null)
 const editDraft = reactive({ name: '', price: null, quantity: null, category: '', discountPercent: 0 })
+const openId = ref(null)
 
 const money = (n) => `₹${Math.round(n || 0).toLocaleString()}`
+const toggleOpen = (id) => (openId.value = openId.value === id ? null : id)
 
 // Per-product performance, worked out from every order. Units and revenue
 // come from the order lines, so a product's numbers follow its real sales.
@@ -36,7 +38,8 @@ const performance = computed(() => {
   })
   return rows.sort((a, b) => b.revenue - a.revenue)
 })
-const topRevenue = computed(() => Math.max(1, ...performance.value.map((r) => r.revenue)))
+const totalRevenue = computed(() => performance.value.reduce((n, r) => n + r.revenue, 0))
+const share = (r) => Math.round((r.revenue / Math.max(1, totalRevenue.value)) * 100)
 const lowStock = computed(() => products.value.filter((p) => p.quantity <= LOW_STOCK).sort((a, b) => a.quantity - b.quantity))
 
 // Bars for the last 14 days, scaled to the busiest day.
@@ -157,28 +160,6 @@ onMounted(refresh)
     </div>
 
     <section class="panel">
-      <h2>Product performance</h2>
-      <div class="table-scroll">
-        <table>
-          <thead><tr><th></th><th>Product</th><th>Category</th><th class="num">Units sold</th><th class="num">Orders</th><th class="num">Revenue</th><th>Share</th><th>Stock</th></tr></thead>
-          <tbody>
-            <tr v-for="r in performance" :key="r.id">
-              <td><img :src="getProductImage(r.name)" :alt="r.name" class="thumb" /></td>
-              <td class="pname">{{ r.name }}</td>
-              <td>{{ r.category || 'More' }}</td>
-              <td class="num">{{ r.units }}</td>
-              <td class="num">{{ r.orders }}</td>
-              <td class="num">{{ money(r.revenue) }}</td>
-              <td><div class="share"><span :style="{ width: (r.revenue / topRevenue) * 100 + '%' }"></span></div></td>
-              <td><span class="pill" :class="stockClass(r.quantity)">{{ stockLabel(r.quantity) }}</span></td>
-            </tr>
-            <tr v-if="performance.length === 0"><td colspan="8" class="empty-row">No products yet.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="panel">
       <h2>Orders</h2>
       <div class="table-scroll">
         <table>
@@ -211,7 +192,7 @@ onMounted(refresh)
     </section>
 
     <section class="panel">
-      <h2><Boxes :size="17" /> Manage listings</h2>
+      <h2><Boxes :size="17" /> Products, stock and performance</h2>
       <form class="add-form" @submit.prevent="addProduct">
         <input v-model="newProduct.name" placeholder="Product name" required />
         <input v-model="newProduct.price" type="number" min="0" placeholder="Price (₹)" required />
@@ -224,35 +205,55 @@ onMounted(refresh)
       <div class="table-scroll">
         <table>
           <thead>
-            <tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Sale %</th><th>Stock</th><th></th></tr>
+            <tr><th></th><th></th><th>Product</th><th>Category</th><th class="num">Price</th><th>Sale</th><th>Stock</th><th class="num">Units sold</th><th class="num">Revenue</th><th></th></tr>
           </thead>
           <tbody>
-            <tr v-for="p in products" :key="p.id">
-              <td><img :src="getProductImage(p.name)" :alt="p.name" class="thumb" /></td>
-              <template v-if="editingId === p.id">
-                <td><input v-model="editDraft.name" /></td>
-                <td><input v-model="editDraft.category" /></td>
-                <td><input v-model="editDraft.price" type="number" min="0" /></td>
-                <td><input v-model="editDraft.discountPercent" type="number" min="0" max="90" /></td>
-                <td><input v-model="editDraft.quantity" type="number" min="0" /></td>
+            <template v-for="r in performance" :key="r.id">
+              <tr>
+                <td><button class="chev" :aria-expanded="openId === r.id" aria-label="Show performance" @click="toggleOpen(r.id)"><ChevronDown :size="16" :class="{ turned: openId === r.id }" /></button></td>
+                <td><img :src="getProductImage(r.name)" :alt="r.name" class="thumb" /></td>
+                <template v-if="editingId === r.id">
+                  <td><input v-model="editDraft.name" /></td>
+                  <td><input v-model="editDraft.category" /></td>
+                  <td><input v-model="editDraft.price" type="number" min="0" /></td>
+                  <td><input v-model="editDraft.discountPercent" type="number" min="0" max="90" /></td>
+                  <td><input v-model="editDraft.quantity" type="number" min="0" /></td>
+                </template>
+                <template v-else>
+                  <td class="pname">{{ r.name }}</td>
+                  <td>{{ r.category || 'More' }}</td>
+                  <td class="num">{{ money(r.price) }}</td>
+                  <td>{{ r.discountPercent ? r.discountPercent + '%' : '—' }}</td>
+                  <td><span class="pill" :class="stockClass(r.quantity)">{{ stockLabel(r.quantity) }}</span></td>
+                </template>
+                <td class="num">{{ r.units }}</td>
+                <td class="num">{{ money(r.revenue) }}</td>
                 <td class="actions">
-                  <button class="btn btn-outline" @click="saveEdit(p.id)"><Check :size="15" /> Save</button>
-                  <button class="btn btn-outline" @click="editingId = null"><X :size="15" /></button>
+                  <template v-if="editingId === r.id">
+                    <button class="btn btn-outline" @click="saveEdit(r.id)"><Check :size="15" /> Save</button>
+                    <button class="btn btn-outline" aria-label="Cancel" @click="editingId = null"><X :size="15" /></button>
+                  </template>
+                  <template v-else>
+                    <button class="btn btn-outline" @click="startEdit(r)"><Pencil :size="14" /> Edit</button>
+                    <button class="btn btn-danger-outline" @click="remove(r.id)"><Trash2 :size="14" /> Delete</button>
+                  </template>
                 </td>
-              </template>
-              <template v-else>
-                <td class="pname">{{ p.name }}</td>
-                <td>{{ p.category || 'More' }}</td>
-                <td class="num">{{ money(p.price) }}</td>
-                <td>{{ p.discountPercent ? p.discountPercent + '%' : '—' }}</td>
-                <td><span class="pill" :class="stockClass(p.quantity)">{{ stockLabel(p.quantity) }}</span></td>
-                <td class="actions">
-                  <button class="btn btn-outline" @click="startEdit(p)"><Pencil :size="14" /> Edit</button>
-                  <button class="btn btn-danger-outline" @click="remove(p.id)"><Trash2 :size="14" /> Delete</button>
+              </tr>
+              <tr v-if="openId === r.id" class="detail">
+                <td colspan="10">
+                  <div class="detail-grid">
+                    <div><span class="k">Orders</span><strong>{{ r.orders }}</strong></div>
+                    <div><span class="k">Units sold</span><strong>{{ r.units }}</strong></div>
+                    <div><span class="k">Average per order</span><strong>{{ money(r.orders ? r.revenue / r.orders : 0) }}</strong></div>
+                    <div class="share-cell">
+                      <span class="k">Share of revenue · {{ share(r) }}%</span>
+                      <div class="share"><span :style="{ width: share(r) + '%' }"></span></div>
+                    </div>
+                  </div>
                 </td>
-              </template>
-            </tr>
-            <tr v-if="products.length === 0"><td colspan="7" class="empty-row">No products yet.</td></tr>
+              </tr>
+            </template>
+            <tr v-if="products.length === 0"><td colspan="10" class="empty-row">No products yet.</td></tr>
           </tbody>
         </table>
       </div>
@@ -298,6 +299,14 @@ th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; colo
 .actions { white-space: nowrap; }
 .actions .btn { padding: 6px 12px; font-size: 0.82rem; margin-right: 4px; }
 .coupon-tag { font-size: 0.7rem; color: var(--olive); font-weight: 700; }
+.chev { border: 1px solid var(--border); background: #fff; border-radius: 6px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.chev svg { transition: transform 0.2s; }
+.chev svg.turned { transform: rotate(180deg); }
+.detail td { background: #f7f0e6; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 1.6fr; gap: 14px; align-items: end; }
+.detail .k { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
+.detail-grid strong { font-family: 'Fraunces', Georgia, serif; font-size: 1.15rem; }
+.share-cell .share { margin-top: 6px; min-width: 0; }
 .empty-row { text-align: center; color: var(--ink-soft); }
 select, input { font: inherit; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 8px; background: #fff; }
 
@@ -314,5 +323,6 @@ select, input { font: inherit; border: 1px solid var(--border); border-radius: v
   .kpis { grid-template-columns: repeat(2, 1fr); }
   .panels { grid-template-columns: 1fr; }
   .add-form { grid-template-columns: 1fr 1fr; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>

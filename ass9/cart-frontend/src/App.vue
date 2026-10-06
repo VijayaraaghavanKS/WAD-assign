@@ -1,7 +1,7 @@
 <script setup>
-import { computed, nextTick, onMounted, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
-import { ShoppingCart, ShoppingBag, LogOut, Package, ShieldCheck, Activity } from 'lucide-vue-next'
+import { ShoppingCart, ShoppingBag, LogOut, Package, ShieldCheck, Activity, Tag } from 'lucide-vue-next'
 import { useCartStore } from './stores/cart'
 import { useAuthStore } from './stores/auth'
 
@@ -9,25 +9,27 @@ const cart = useCartStore()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const floatOpen = ref(false)
 
-// Load the cart once a shopper is signed in, and again whenever the session changes.
-watch(() => auth.isLoggedIn, (loggedIn) => loggedIn && cart.load(), { immediate: true })
-onMounted(() => auth.isLoggedIn && cart.load())
+// Guests and shoppers see the cart. Admins and developers do not.
+const isShopper = computed(() => !auth.isLoggedIn || auth.role === 'USER')
+// The floating cart shows on every shopper page except the cart page itself.
+const showFloatingCart = computed(() => isShopper.value && route.path !== '/cart')
 
-// Links each role can see. The shop belongs to shoppers only.
+// On sign-in, guest lines move into the server cart. Then the cart reloads for either state.
+watch(() => auth.isLoggedIn, async (loggedIn) => {
+  if (loggedIn) await cart.mergeGuest().catch(() => {})
+  cart.load()
+}, { immediate: true })
+
+// Links each role can see. Shop and Offers are open to everyone; the rest need a role.
+const shopLinks = [['/', ShoppingBag, 'Shop'], ['/offers', Tag, 'Offers']]
 const links = computed(() => {
   const role = auth.role
   const extra = { USER: [['/orders', Package, 'My orders']], ADMIN: [['/admin', ShieldCheck, 'Admin']], DEVELOPER: [['/dev', Activity, 'Developer']] }
-  return role === 'USER' ? [['/', ShoppingBag, 'Shop'], ...extra.USER] : (extra[role] ?? [])
+  if (!auth.isLoggedIn) return shopLinks
+  return role === 'USER' ? [...shopLinks, ...extra.USER] : (extra[role] ?? [])
 })
-
-// A RouterLink to the current route does nothing, so the cart button goes to
-// Shop first (if needed) and then scrolls the cart panel into view.
-async function goToCart() {
-  if (route.path !== '/') await router.push('/')
-  await nextTick()
-  document.getElementById('cart-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 
 function logout() {
   auth.logout()
@@ -47,13 +49,13 @@ function logout() {
 
         <div class="spacer" />
 
-        <template v-if="auth.isLoggedIn">
-          <button v-if="auth.role === 'USER'" type="button" class="cart-link" @click="goToCart">
-            <ShoppingCart :size="22" />
-            <span>Cart</span>
-            <span class="cart-badge">{{ cart.itemCount }}</span>
-          </button>
+        <RouterLink v-if="isShopper" to="/cart" class="cart-link">
+          <ShoppingCart :size="22" />
+          <span>Cart</span>
+          <span class="cart-badge">{{ cart.itemCount }}</span>
+        </RouterLink>
 
+        <template v-if="auth.isLoggedIn">
           <div class="session">
             <span class="avatar">{{ auth.session.username[0].toUpperCase() }}</span>
             <div>
@@ -63,9 +65,10 @@ function logout() {
             <button type="button" class="logout" title="Log out" @click="logout"><LogOut :size="16" /></button>
           </div>
         </template>
+        <RouterLink v-else to="/login" class="sign-in">Sign in</RouterLink>
       </div>
 
-      <nav v-if="auth.isLoggedIn" class="subnav">
+      <nav class="subnav">
         <RouterLink v-for="[to, Icon, label] in links" :key="to" :to="to" exact-active-class="active">
           <component :is="Icon" :size="15" /> {{ label }}
         </RouterLink>
@@ -75,6 +78,23 @@ function logout() {
     <main>
       <RouterView />
     </main>
+
+    <aside v-if="showFloatingCart" class="float-cart">
+      <div v-if="floatOpen" class="float-panel" role="dialog" aria-label="Quick cart">
+        <p v-if="cart.items.length === 0" class="float-empty">Your cart is empty.</p>
+        <ul v-else>
+          <li v-for="item in cart.items" :key="item.id">
+            <span>{{ item.productName }} × {{ item.quantity }}</span>
+            <span>₹{{ (item.price * item.quantity).toLocaleString() }}</span>
+          </li>
+        </ul>
+        <div class="float-total"><span>Total</span><strong>₹{{ cart.total.toLocaleString() }}</strong></div>
+        <RouterLink to="/cart" class="btn btn-primary" @click="floatOpen = false">View cart</RouterLink>
+      </div>
+      <button class="float-btn" :aria-expanded="floatOpen" @click="floatOpen = !floatOpen">
+        <ShoppingCart :size="18" /> {{ cart.itemCount }} · ₹{{ cart.total.toLocaleString() }}
+      </button>
+    </aside>
 
     <footer class="site-footer">
       MaisonCart &mdash; ICS1511 Web Application Development Laboratory
@@ -161,17 +181,38 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   display: flex;
   align-items: center;
   gap: 8px;
-  background: none;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--paper);
+  text-decoration: none;
   font: inherit;
   font-weight: 600;
   padding: 8px 12px;
-  cursor: pointer;
 }
 
+/* Bottom-right cart pill, with a quick preview that opens above it. */
+.float-cart { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: grid; justify-items: end; gap: 10px; }
+.float-btn {
+  display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+  background: var(--navy-dark); color: var(--paper); font: inherit; font-weight: 700;
+  padding: 12px 18px; border-radius: 999px; box-shadow: 0 10px 30px rgba(43, 33, 27, 0.3);
+}
+.float-panel {
+  width: min(320px, calc(100vw - 32px)); background: var(--paper); border-radius: 16px; padding: 16px;
+  box-shadow: 0 10px 30px rgba(43, 33, 27, 0.25); display: grid; gap: 10px;
+}
+.float-panel ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.9rem; max-height: 240px; overflow-y: auto; }
+.float-panel li { display: flex; justify-content: space-between; gap: 10px; }
+.float-total { display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 10px; font-weight: 700; }
+.float-empty { margin: 0; color: var(--ink-soft); }
+
+
 .cart-link:hover { border-color: rgba(251, 247, 240, 0.4); }
+.cart-link.router-link-active { border-color: var(--accent); }
+.sign-in {
+  color: var(--navy-dark); background: var(--paper); text-decoration: none; font-weight: 700;
+  padding: 8px 18px; border-radius: 999px;
+}
 
 .cart-badge {
   background: var(--accent);

@@ -9,10 +9,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -51,9 +53,22 @@ class CartServiceTest {
     void addToCart_existingProduct_incrementsQuantity() {
         CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 2, null, null);
         when(carts.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(existing);
+        when(products.findById("p1")).thenReturn(Optional.of(new Product("p1", "Laptop", 50000, 5, "Electronics", 10)));
         when(carts.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
 
         assertThat(service.addToCart("u1", "p1").getQuantity()).isEqualTo(3);
-        verify(products, never()).findById(any());
+    }
+
+    // The shop has 2 left and the cart already holds 2: a third one is refused, and nothing is saved.
+    @Test
+    void addToCart_overStock_isRefused() {
+        CartItem existing = new CartItem("c1", "u1", "p1", "Laptop", 55000, 2, null, null);
+        when(carts.findByUserIdAndProductIdAndSizeAndColour("u1", "p1", null, null)).thenReturn(existing);
+        when(products.findById("p1")).thenReturn(Optional.of(new Product("p1", "Laptop", 50000, 2, "Electronics", 5)));
+
+        assertThatThrownBy(() -> service.addToCart("u1", "p1"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Only 2 left");
+        verify(carts, never()).save(any());
     }
 }
