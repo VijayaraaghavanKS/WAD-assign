@@ -75,7 +75,7 @@ Browser (Vue 3 + Pinia)  --->  Spring Boot app :8082
 |---|---|---|
 | **User** (ass9 only) | Accounts, password hashes, login tokens, roles | Products, carts, orders |
 | **Product** | Catalogue, categories, prices, sale %, stock, sizes, colours, specs, reviews | Who is buying |
-| **Cart** | Each user's lines, with size and colour, and the sale price copied at add time | Stock levels (checked at checkout) |
+| **Cart** | Each user's lines, with size and colour, and the sale price copied at add time | Stock levels (checked when an item is added and again at checkout) |
 | **Order** | Orders, addresses, payment method, delivery fee, GST, invoice number, status | Product or user records (copied in or looked up) |
 
 In the monolith (ass8) the same four responsibilities are packages inside one app.
@@ -112,7 +112,7 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 | Method | Path | Who | What it does |
 |---|---|---|---|
 | GET | `/api/cart` | Logged-in user | Their cart |
-| POST | `/api/cart/add/{productId}` | Logged-in user | Body `{ "size", "colour" }` (optional). Same product in another size is a new line. Applies the sale price |
+| POST | `/api/cart/add/{productId}` | Logged-in user | Body `{ "size", "colour" }` (optional). Same product in another size is a new line. Applies the sale price. 409 if the quantity would exceed stock |
 | PUT | `/api/cart/{cartItemId}` | Logged-in user | Sets a quantity |
 | DELETE | `/api/cart/{cartItemId}` | Logged-in user | Removes one line |
 | DELETE | `/api/cart` | Logged-in user | Empties the cart |
@@ -198,14 +198,14 @@ The admin page is a working dashboard, not an inventory form.
 - **Orders table** with the customer's name and the amount paid (coupon shown). Change an order's status from a dropdown.
 - **Low-stock panel** listing products to restock, lowest first.
 - **Manage listings** in the same table: add a product with category, price, stock and sale %, edit inline, or delete.
-- **Stock cannot go negative.** Checkout checks stock and fails with a clear message when an item sold out just before payment.
+- **Stock cannot go negative.** Add to cart refuses a quantity above stock ("Only 2 left" or "Out of stock"). Checkout checks again and fails with a clear message when an item sold out just before payment.
 - **No redeploy is needed** to add a product, change a price, or move an order along.
 
 ---
 
 ## 9. Developer console and debugging
 
-- **Service map (ass9).** Shows each service and whether it answers, checked every five seconds.
+- **Service map (ass9).** Shows each service and whether it answers, checked every five seconds. Each probe calls `/dev/metrics` with `no-cors`, so any reply counts as up, even when a service sends no CORS header for the path.
 - **Request logs for every service.** The last 12 requests per service, with method, path, status, and time taken. Each service logs only its own requests, which is the trade-off microservices make against the monolith's single log.
 - **Metrics per service.** Requests, average time, error rate, and uptime.
 - **Endpoint reference.** Every endpoint, its service, and what it does.
@@ -226,7 +226,7 @@ The admin page is a working dashboard, not an inventory form.
 |---|---|
 | Anyone can change anything | Roles checked on every admin API call |
 | Price changes rewrite old carts and orders | Sale price copied at add time; orders keep a snapshot of each line |
-| Stock goes negative or is never checked | Stock reserved at checkout and returned if checkout fails partway |
+| Stock goes negative or is never checked | Stock checked when added to the cart, reserved at checkout, and returned if checkout fails partway |
 | Order is just a total | Invoice with address, payment, delivery fee, coupon, GST and invoice number |
 | Same product, one line | Size and colour are part of the cart line and the order line |
 | Product page is a name and a price | Sizes, colours, specs, reviews, related items, and a review form |
@@ -240,41 +240,70 @@ The admin page is a working dashboard, not an inventory form.
 
 ## 11. Testing
 
-### Automated tests (`./mvnw test`, all passing)
+Two kinds of checking are used. Automated tests run on every build and catch rule breaks in the code. The live checks were run by hand against running services (with `curl` or the browser) to confirm the whole path works. Each table row below says which one applies.
 
-| Suite | Service | Tests | What it checks |
+### Automated tests (Java, JUnit 5, Mockito, Spring Test)
+
+Run one service's tests with `./mvnw test` inside its folder. Every suite passes.
+
+| Service | Suite | Tests | What it checks |
 |---|---|---|---|
-| `ProductControllerTest` | Product (ass9) | 4 | Listing, getting one product, and that creating a product needs an admin token |
-| `CartServiceTest` and context test | Cart (ass9) | 3 | A new product gets its sale price. Adding the same product again only raises quantity. The application starts |
-| `CartServiceTest` and context test | ass8 monolith | 3 | Same cart rules, inside the monolith |
-| User, Order | ass9 | 0 | Compile and run checked. No automated tests yet |
+| ass8 monolith | `CartBackendApplicationTests` | 1 | The whole app starts and its Spring wiring is valid |
+| ass8 monolith | `service/CartServiceTest` | 3 | Cart rules: sale price copied at add time, same product bumps quantity, adding past stock is refused |
+| ass9 Cart Service | `CartServiceApplicationTests` | 1 | The service starts |
+| ass9 Cart Service | `service/CartServiceTest` | 2 | Sale price copied at add time, same product bumps quantity |
+| ass9 Product Service | `ProductServiceApplicationTests` | 1 | The service starts |
+| ass9 Product Service | `controller/ProductControllerTest` | 3 | Listing returns JSON, one product is returned by id, creating a product returns it |
+| ass9 User Service | none | 0 | Builds and starts; checked by the live checks below |
+| ass9 Order Service | none | 0 | Builds and starts; checked by the live checks below |
+
+**Why these tests and what they achieve**
+
+- **Context tests (`...ApplicationTests`).** Each one starts the full Spring application. If a bean is missing or a property is wrong, the build fails here rather than at the first request. This is the cheapest guard against a broken deploy.
+- **Cart rule tests (`CartServiceTest`).** The cart is where price and stock rules meet, so these tests pin them down without a database or a running Product Service:
+  - *Sale price at add time*: a laptop listed at 50000 with 10% off is added as 45000, and the cart keeps that price even if the admin changes the sale later.
+  - *Same product bumps quantity*: adding the same product again raises the quantity; it does not create a second line.
+  - *Stock refused on add* (ass8 `addToCart_overStock_isRefused`): with 2 in stock and 2 already in the cart, a third add throws "Only 2 left" and nothing is saved. This is the check that stops a shopper from building a cart the shop cannot fill.
+  - In ass9 the Product Service is replaced by a mock `RestTemplate`, so the test checks the Cart Service's own rules and never starts Product Service.
+- **Controller tests (`ProductControllerTest`).** These call the Product API through MockMvc and check the HTTP shape: the list is a JSON array, one product comes back by id, and a create call returns the saved product. They cover the contract the storefront relies on.
+
+**What the automated tests do not cover:** the Vue frontend has no test runner, the User and Order services have no tests, and the stock check at checkout is checked by hand (case 7 below). The guest-cart merge is checked by hand too (case 21).
+
+### Build check (frontend)
+
+`npx vite build` in each `cart-frontend` compiles every view, store and route. It catches broken imports, missing components and syntax errors. It does not run the app, so it is paired with the browser checks below.
 
 ### Real-life use cases
 
-Checked means run against the live services with `curl` or the browser, and the result was seen.
+**Automated** means a unit or context test covers it. **Checked** means it was run against live services with `curl` or the browser, and the result was seen. **Not yet run** means the feature is built but has not been exercised.
 
 | # | Scenario | How it was checked | Status |
 |---|---|---|---|
 | 1 | Shopper logs in with correct password | Login API, and the UI demo chip | Checked |
 | 2 | Wrong password is refused | Login API | Not yet run |
-| 3 | Sale price is applied at add to cart | Laptop 55000 at 15% = 46750 (ass8 and ass9) | Checked |
+| 3 | Sale price is applied at add to cart | Laptop 55000 at 15% = 46750 (ass8 and ass9) | Automated and checked |
 | 4 | Same product again raises quantity | Unit test | Automated |
 | 5 | Checkout creates an order and empties the cart | Checkout via curl; order in history (ass8 and ass9) | Checked |
 | 6 | Anonymous shopper is refused | Add to cart and checkout without a token return 401 | Checked |
 | 7 | Checkout fails when stock is short and stock is restored | Webcam at 0 stock returned 409; Laptop stock and cart unchanged | Checked |
-| 8 | Non-admin cannot create, edit, or read admin data | Shopper gets 403 on product writes and `/api/orders/stats` | Checked |
-| 9 | Admin changes sale % and shopper sees it | Admin edit, then a -25% badge on the shop card. Cart keeps the price it had | Checked (browser) |
-| 10 | Category filter returns only that category | `?category=Audio` and `?category=Fashion` | Checked |
-| 11 | Same product in two sizes makes two cart lines and two order lines | Running Shoes size 9 and 10 (ass9); size 8 twice merged into one line of quantity 2 (ass8) | Checked |
-| 12 | Size and colour survive to the order | Order lines show size and colour (ass9 and ass8) | Checked |
-| 13 | Invalid PIN is refused at checkout | PIN of 2 digits returns 400 | Checked |
-| 14 | Coupon and delivery fee are applied | SAVE10 on 999 mat with 5% sale plus 99 delivery = 953.14 total, GST 145.39 included | Checked |
-| 15 | Review is saved on the product | Review posted, the review count grows, and the reviewer's name is shown | Checked |
-| 16 | Shopper's orders are linked to their own account | `shopper_asha` sees her 18 seeded orders | Checked |
-| 17 | Admin dashboard numbers come from the orders | Stats: revenue, count, average, 14 daily points, top products | Checked |
-| 18 | Admin status change moves an order along | Status update via API | Not yet run |
-| 19 | Photo credits page and footer link | Built; not yet checked in a browser | Not yet run |
-| 20 | Wishlist, compare, recently viewed, budget filter, coupon box | Built; click-through in the browser | Not yet run |
+| 8 | Add to cart is refused when stock is short | Unit test (ass8 `addToCart_overStock_isRefused`); live add past stock not yet run | Automated |
+| 9 | Non-admin cannot create, edit, or read admin data | Shopper gets 403 on product writes and `/api/orders/stats` | Checked |
+| 10 | Admin changes sale % and shopper sees it | Admin edit, then a -25% badge on the shop card. Cart keeps the price it had | Checked (browser) |
+| 11 | Category filter returns only that category | `?category=Audio` and `?category=Fashion` | Checked |
+| 12 | Same product in two sizes makes two cart lines and two order lines | Running Shoes size 9 and 10 (ass9); size 8 twice merged into one line of quantity 2 (ass8) | Checked |
+| 13 | Size and colour survive to the order | Order lines show size and colour (ass9 and ass8) | Checked |
+| 14 | Invalid PIN is refused at checkout | PIN of 2 digits returns 400 | Checked |
+| 15 | Coupon and delivery fee are applied | SAVE10 on 999 mat with 5% sale plus 99 delivery = 953.14 total, GST 145.39 included | Checked |
+| 16 | Review is saved on the product | Review posted, the review count grows, and the reviewer's name is shown | Checked |
+| 17 | Shopper's orders are linked to their own account | `shopper_asha` sees her 18 seeded orders | Checked |
+| 18 | Admin dashboard numbers come from the orders | Stats: revenue, count, average, 14 daily points, top products | Checked |
+| 19 | Admin status change moves an order along | Status update via API | Not yet run |
+| 20 | Photo credits page and footer link | Built; not yet checked in a browser | Not yet run |
+| 21 | Guest browses, adds to cart, then signs in and the cart merges | Built; not yet checked in a browser | Not yet run |
+| 22 | Developer service map shows running services green and a stopped one red | Build passes; probe change not yet checked in a browser | Not yet run |
+| 23 | Wishlist, compare, recently viewed, budget filter, coupon box | Built; click-through in the browser | Not yet run |
+
+**Re-run after changes:** `./mvnw test` in each service, `npx vite build` in each frontend, then the checked rows that touch the change.
 
 ---
 
@@ -328,18 +357,21 @@ On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for exam
 - **No API gateway.** The browser calls each service directly. A gateway would be the next step for production, along with load balancing.
 - **Reviews are not limited to buyers.** Any logged-in shopper can review. "Verified purchase" is shown as text on every review and is not checked against orders yet.
 - **Wishlist, recently viewed, compare and the budget filter live in this browser only** (localStorage). They do not follow the shopper to another device.
-- **Coupon codes are a fixed list** (`SAVE10`, `WELCOME20`) in the Order service. The shop previews the same two codes.
+- **Coupon codes are a fixed list** (`SAVE10`, `WELCOME20`) in the Order service. The cart and Offers page show the same two codes, so a new code must be added in both places.
+- **Stock check on add is a snapshot.** Two shoppers can both add the last unit; checkout is the step that decides who gets it.
+- **Guest carts are per browser.** A guest who clears site data, or switches device, starts again.
 - **Seeded orders are written straight into MongoDB** so they can carry past dates. Orders placed through the app are dated now.
 - **Admin-added products need a photo** from the photo script. Until then the storefront shows a broken image for that product.
 - **Developer logs are per service and live in each service's own database.** There is no central log store, which is the microservice trade-off the console shows.
-- **No automated browser tests.** Cases 18 to 20 are manual for now.
+- **No automated frontend or browser tests.** The Vue code is checked by `vite build` and by hand. Cases 19 to 23 in section 11 are still to be run.
+- **User and Order services have no unit tests.** Their behaviour is checked through the live cases in section 11.
 
 ---
 
 ## 15. Notes for future developers
 
 - To add a product field: change the model, the create and update methods in the Product service, the admin form, and the product page. The storefront reads the same API.
-- To add a coupon: add the code and its percentage to `COUPONS` in the Order service's `CheckoutService`, and to the same list in the shop view.
+- To add a coupon: add the code and its percentage to `COUPONS` in the Order service's `CheckoutService` (ass8: `CheckoutService` in the cart backend), then to `COUPONS` in `Cart.vue` and to the list in `Offers.vue`, in both frontends.
 - To add a role: add it to the seed data, the route guard in `router/index.js`, and the admin check in the service.
 - To add a service in ass9: copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add it to the Developer page's service list.
 - Keep the API paths the same across ass8 and ass9 so the frontend stays shared. Copy shared views between the two frontends after editing.
