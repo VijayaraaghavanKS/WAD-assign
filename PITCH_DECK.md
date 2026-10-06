@@ -25,7 +25,7 @@ The point is not to compete with Amazon on scale. The point is to show, in worki
 | Port | 8082 | 8083 (product), 8084 (cart), 8085 (user), 8086 (order) |
 | Database | `ShoppingCartDB` | One database per service (`E-CommDB`, `CartServiceDB`, `UserServiceDB`, `OrderServiceDB`) |
 | Calls between parts | Direct method calls | HTTP calls over REST |
-| Frontend | Same code; every call goes to port 8082 | Same code; each call goes to its service's port |
+| Frontend | Same code; every call goes to port 8082 | Same code; every call goes to the API gateway on `:8080`, which forwards it to the service that owns the path |
 | Developer console | One log stream | Logs and metrics for each service, side by side |
 
 The frontend is nearly identical in both. Only the base URLs differ.
@@ -41,7 +41,8 @@ The frontend is nearly identical in both. Only the base URLs differ.
   /login  /  (shop)  /product/:id  /orders  /admin  /dev  /credits
         |      |            |          |        |      |
         +------+------------+----------+--------+------+
-                              |
+                    API Gateway (ass9 only, :8080)
+                              |  forwards /api/* by path
    +----------------+---------+--------+-----------------+
    |                |                  |                 |
 User Service   Product Service     Cart Service      Order Service
@@ -73,7 +74,7 @@ Browser (Vue 3 + Pinia)  --->  Spring Boot app :8082
 
 | Service | Owns | Does not own |
 |---|---|---|
-| **User** (ass9 only) | Accounts, password hashes, login tokens, roles | Products, carts, orders |
+| **User** (ass9 only) | Accounts, password hashes, login tokens, roles, and each shopper's saved lists (wishlist, compare, recently viewed, address) | Products, carts, orders |
 | **Product** | Catalogue, categories, prices, sale %, stock, sizes, colours, specs, reviews | Who is buying |
 | **Cart** | Each user's lines, with size and colour, and the sale price copied at add time | Stock levels (checked when an item is added and again at checkout) |
 | **Order** | Orders, addresses, payment method, delivery fee, GST, invoice number, status | Product or user records (copied in or looked up) |
@@ -92,6 +93,8 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 |---|---|---|---|
 | POST | `/api/auth/register` | Anyone | Creates a shopper account |
 | POST | `/api/auth/login` | Anyone | Returns `{ token, username, role }` |
+| GET | `/api/auth/prefs` | Logged-in user | The shopper's saved wishlist, compare tray, recently viewed and address |
+| PUT | `/api/auth/prefs` | Logged-in user | Saves those lists on the account |
 | GET | `/api/auth/me` | Any logged-in user | Who owns the token (used by other services) |
 
 ### Product Service (ass9 `:8083`; ass8 `:8082`)
@@ -100,7 +103,7 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 |---|---|---|---|
 | GET | `/api/products` | Anyone | Lists products. Optional `?category=Audio` |
 | GET | `/api/products/{id}` | Anyone | One product with sizes, colours, specs, description and reviews |
-| POST | `/api/products/{id}/reviews` | Logged-in shopper | Posts a review (rating 1 to 5, headline, text) |
+| POST | `/api/products/{id}/reviews` | Logged-in shopper | Posts a review (rating 1 to 5, headline, text). Marked **Verified purchase** when the shopper has an order containing the product |
 | POST | `/api/products` | Admin | Adds a product |
 | PUT | `/api/products/{id}` | Admin | Edits name, price, stock, category, sale % |
 | DELETE | `/api/products/{id}` | Admin | Removes a product |
@@ -125,6 +128,9 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 | GET | `/api/orders` | Logged-in user | Their orders, newest first, with address, payment, fees, GST and invoice |
 | GET | `/api/orders/all` | Admin | Every order, with the customer's username |
 | GET | `/api/orders/stats` | Admin | Revenue, order count, average order value, status counts, last 14 days, top products |
+| GET | `/api/orders/coupons` | Anyone | The coupon codes the shop accepts now, with their percentages |
+| POST | `/api/orders/coupons` | Admin | Adds a code (`{ code, percent }`, 1 to 90%) |
+| DELETE | `/api/orders/coupons/{code}` | Admin | Removes a code |
 | PUT | `/api/orders/{id}/status` | Admin | Moves an order to PLACED, PACKED, SHIPPED or DELIVERED |
 
 ### Developer endpoints (for the console)
@@ -150,7 +156,7 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 
 **My cart (`/cart`)**
 - A full page: each line shows the photo, name, size and colour, unit price, quantity stepper, save for later, and remove.
-- Order summary: coupon box (`SAVE10` = 10% off, `WELCOME20` = 20% off), a free-delivery meter (free over ₹5,000, otherwise ₹99), the total, and GST shown as included. Checkout opens from here.
+- Order summary: coupon box (any active code, such as `SAVE10` = 10% off and `WELCOME20` = 20% off), a free-delivery meter (free over ₹5,000, otherwise ₹99), the total, and GST shown as included. Checkout opens from here.
 
 **Product page (`/product/:id`)**
 - Photo, rating, price with list price and sale %, tax note, and stock level.
@@ -169,7 +175,7 @@ Anything that acts on a user needs `Authorization: Bearer <token>`. The token co
 - The shop, product pages, offers and the cart are open to guests. A guest's cart is kept in the browser and moved into their account when they sign in.
 - Checkout is the only step that asks for a sign-in. The cart then says so, and the shopper returns to the cart after signing in.
 
-**Offers (`/offers`)** lists the coupon codes the Order Service really accepts (`SAVE10`, `WELCOME20`), each as a ticket with its terms, a copy button, and a "Use at cart" link. That link applies the code and shows the saving before payment. Standing terms (free delivery over ₹5,000, cash on delivery, GST inside the price) sit below.
+**Offers (`/offers`)** lists the coupon codes the Order Service accepts right now. Admins add and remove codes, and the page follows. Each code is a ticket with its terms, a copy button, and a "Use at cart" link. That link applies the code and shows the saving before payment. Standing terms (free delivery over ₹5,000, cash on delivery, GST inside the price) sit below.
 
 **Photo credits (`/credits`)** lists the author, licence and source page of each product photo. The link is in the footer.
 
@@ -198,6 +204,7 @@ The admin page is a working dashboard, not an inventory form.
 - **Orders table** with the customer's name and the amount paid (coupon shown). Change an order's status from a dropdown.
 - **Low-stock panel** listing products to restock, lowest first.
 - **Manage listings** in the same table: add a product with category, price, stock and sale %, edit inline, or delete.
+- **Coupon codes** panel: add a code and its percentage, or remove one. Checkout and the Offers page use the same list.
 - **Stock cannot go negative.** Add to cart refuses a quantity above stock ("Only 2 left" or "Out of stock"). Checkout checks again and fails with a clear message when an item sold out just before payment.
 - **No redeploy is needed** to add a product, change a price, or move an order along.
 
@@ -254,6 +261,7 @@ Run one service's tests with `./mvnw test` inside its folder. Every suite passes
 | ass9 Cart Service | `service/CartServiceTest` | 2 | Sale price copied at add time, same product bumps quantity |
 | ass9 Product Service | `ProductServiceApplicationTests` | 1 | The service starts |
 | ass9 Product Service | `controller/ProductControllerTest` | 3 | Listing returns JSON, one product is returned by id, creating a product returns it |
+| ass9 API Gateway | `controller/GatewayControllerTest` | 2 | Each path goes to the service that owns it (user, product, cart, order); dev and unknown paths are not forwarded |
 | ass9 User Service | none | 0 | Builds and starts; checked by the live checks below |
 | ass9 Order Service | none | 0 | Builds and starts; checked by the live checks below |
 
@@ -302,6 +310,12 @@ Run one service's tests with `./mvnw test` inside its folder. Every suite passes
 | 21 | Guest browses, adds to cart, then signs in and the cart merges | Built; not yet checked in a browser | Not yet run |
 | 22 | Developer service map shows running services green and a stopped one red | Build passes; probe change not yet checked in a browser | Not yet run |
 | 23 | Wishlist, compare, recently viewed, budget filter, coupon box | Built; click-through in the browser | Not yet run |
+| 24 | Review is marked Verified only after buying the product | Review before buying: `verified = false`; after a checkout of that product: `verified = true` (ass9, through the gateway) | Checked (API) |
+| 25 | Admin adds and removes a coupon; a shopper is refused | Add `TEST15`, delete it, and a shopper's add gets 403 (ass9 and ass8) | Checked (API) |
+| 26 | Checkout uses the database coupon | `SAVE10` applied at checkout gives discount 4125 on subtotal 41250 (ass9) | Checked (API) |
+| 27 | Shopper's wishlist is saved on the account | PUT then GET `/api/auth/prefs` returns the same list (ass9 and ass8) | Checked (API) |
+| 28 | Gateway forwards a call and does not forward dev paths | `/api/products` returns 200 through `:8080`; `/api/dev/logs` returns 404 there | Checked (API) |
+| 29 | Old products still load after the verified field was added | Products saved before the change still list after the nullable field fix (ass9) | Checked (API) |
 
 **Re-run after changes:** `./mvnw test` in each service, `npx vite build` in each frontend, then the checked rows that touch the change.
 
@@ -337,7 +351,7 @@ Run one service's tests with `./mvnw test` inside its folder. Every suite passes
 4. Open the URL Vite prints and sign in.
 
 **Exercise 9 (microservices)**
-1. In four terminals, start `user-service`, `product-service`, `cart-service`, and `order-service` (each with `./mvnw spring-boot:run`).
+1. In five terminals, start `user-service`, `product-service`, `cart-service`, `order-service`, and `api-gateway` (each with `./mvnw spring-boot:run`). The browser talks to the gateway on `:8080`.
 2. `cd ass9/cart-frontend && npm install && npm run dev`
 3. Load the demo data: `scripts/seed-demo-data.sh ass9`
 4. Open the URL Vite prints and sign in.
@@ -354,16 +368,16 @@ On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for exam
 
 - **Payments are simulated.** Checkout records the payment method and places the order. No payment provider is called.
 - **Passwords use SHA-256 for demo purposes.** A real store would use bcrypt or argon2.
-- **No API gateway.** The browser calls each service directly. A gateway would be the next step for production, along with load balancing.
-- **Reviews are not limited to buyers.** Any logged-in shopper can review. "Verified purchase" is shown as text on every review and is not checked against orders yet.
-- **Wishlist, recently viewed, compare and the budget filter live in this browser only** (localStorage). They do not follow the shopper to another device.
-- **Coupon codes are a fixed list** (`SAVE10`, `WELCOME20`) in the Order service. The cart and Offers page show the same two codes, so a new code must be added in both places.
+- **The API gateway is a small pass-through.** It routes by path and forwards the token. It does not check tokens, rate-limit, or balance load. Developer console calls still go straight to each service.
+- **Reviews are not limited to buyers.** Any logged-in shopper can review. A review gets the "Verified purchase" badge only when the shopper has an order containing that product. Other reviews are shown without it.
+- **Signed-out shoppers keep their lists in this browser only** (localStorage). Once signed in, the wishlist, compare tray, recently viewed and address are saved on the account and follow the shopper to other devices. Browser copies are kept as a cache.
+- **The budget slider is not saved.** It resets when the page reloads.
 - **Stock check on add is a snapshot.** Two shoppers can both add the last unit; checkout is the step that decides who gets it.
 - **Guest carts are per browser.** A guest who clears site data, or switches device, starts again.
 - **Seeded orders are written straight into MongoDB** so they can carry past dates. Orders placed through the app are dated now.
 - **Admin-added products need a photo** from the photo script. Until then the storefront shows a broken image for that product.
 - **Developer logs are per service and live in each service's own database.** There is no central log store, which is the microservice trade-off the console shows.
-- **No automated frontend or browser tests.** The Vue code is checked by `vite build` and by hand. Cases 19 to 23 in section 11 are still to be run.
+- **No automated frontend or browser tests.** The Vue code is checked by `vite build` and by hand. Cases 19 to 23 in section 11 are still to be run in the browser.
 - **User and Order services have no unit tests.** Their behaviour is checked through the live cases in section 11.
 
 ---
@@ -371,7 +385,7 @@ On macOS with Homebrew, set `JAVA_HOME` to JDK 21 before running Maven, for exam
 ## 15. Notes for future developers
 
 - To add a product field: change the model, the create and update methods in the Product service, the admin form, and the product page. The storefront reads the same API.
-- To add a coupon: add the code and its percentage to `COUPONS` in the Order service's `CheckoutService` (ass8: `CheckoutService` in the cart backend), then to `COUPONS` in `Cart.vue` and to the list in `Offers.vue`, in both frontends.
+- To add a coupon, use the Coupon codes panel on the Admin page. The codes live in the `coupons` collection; the first start seeds `SAVE10` and `WELCOME20` (`CouponSeeder`).
 - To add a role: add it to the seed data, the route guard in `router/index.js`, and the admin check in the service.
 - To add a service in ass9: copy `cart-service`'s pom, add its URL to the other services' `application.properties`, and add it to the Developer page's service list.
 - Keep the API paths the same across ass8 and ass9 so the frontend stays shared. Copy shared views between the two frontends after editing.
@@ -397,6 +411,7 @@ Only ass9 makes HTTP calls between services. ass8 calls its own repositories dir
 - **Bean definitions:** `ass9/cart-service/src/main/java/com/ssn/cartservice/config/AppConfig.java` and `ass9/order-service/src/main/java/com/ssn/orderservice/OrderServiceApplication.java`.
 - **Cart to Product (price lookup):** `ass9/cart-service/.../service/CartService.java`, `fetchProduct()`, which calls `GET /api/products/{id}`. The same file's `requireStock()` enforces stock on add and on quantity increase.
 - **Order to Cart and Product (checkout):** `ass9/order-service/.../service/CheckoutService.java`. It reads the cart (`GET /api/cart`), reserves stock per line (`POST /api/products/{id}/reserve`), releases it on failure (`/release`), and clears the cart (`DELETE /api/cart`).
+- **Product to Order (verified reviews):** `ass9/product-service/.../security/OrderClient.java`, `hasBought()`. It calls `GET /api/orders` with the shopper's token and checks whether any order contains the product.
 - **Every service to User (who is calling):** `AuthClient.java` in each service's `security/` folder. It calls `GET /api/auth/me` with the caller's token, and the URL comes from `user.service.url` in `application.properties`.
 
 ### Pinia stores (frontend state)
@@ -405,13 +420,17 @@ Each store is defined with `defineStore` in `cart-frontend/src/stores/`. ass8 an
 
 - **`auth.js`:** who is signed in, and their role. The router guard and the header read it.
 - **`cart.js`:** the cart lines, the count and the total. It has a guest path that keeps the cart in `localStorage` (`shopcart-guest-cart`) and a server path. `mergeGuest()` moves the guest cart to the server at sign-in.
-- **`shopper.js`:** the shopper's saved items, recently viewed products, compare list and saved addresses. All of this lives in this browser.
+- **`shopper.js`:** the shopper's saved items, recently viewed products, compare list and saved address. Signed out, these live in this browser. Signed in, `sync()` loads the account's copy (or uploads this browser's copy the first time), and every change is saved to the account. `reset()` returns to this browser's copy on sign-out. `App.vue` calls both from its sign-in watch.
 
 Views read the stores directly. Components do not receive data through props.
 
 ### Props and emits (component communication)
 
 The frontend has no `defineProps` or `defineEmits`, and no `$emit`. The one component, `ass9/cart-frontend/src/components/ServiceMap.vue`, reads its data from its own script. The views are full pages, so they share state through Pinia and the router, not through parent/child events.
+
+### API gateway (ass9)
+
+The browser calls one address, `:8080`. `ass9/api-gateway/src/main/java/com/ssn/apigateway/GatewayController.java` looks at the path (`/api/auth`, `/api/products`, `/api/cart`, `/api/orders`), forwards the method, query, body and token to that service, and returns its reply. `/api/dev` is not routed: the Developer console still calls each service directly. The frontend base URL is `GATEWAY` in `ass9/cart-frontend/src/api/client.js`.
 
 ### Routes and the router guard
 
@@ -423,10 +442,14 @@ The frontend has no `defineProps` or `defineEmits`, and no `$emit`. The one comp
 |---|---|---|
 | Cart page and floating cart | `ass8/cart-frontend/src/views/Cart.vue`, `App.vue` | `ass9/cart-frontend/src/views/Cart.vue`, `App.vue` |
 | Offers and coupons | `ass8/cart-frontend/src/views/Offers.vue` | `ass9/cart-frontend/src/views/Offers.vue` |
+| Coupon codes (database, admin add/remove) | `ass8/cart-backend/.../service/CouponSeeder.java`, `CheckoutService.java` | `ass9/order-service/.../service/CouponSeeder.java`, `CheckoutService.java` |
+| Verified purchase badge | `ass8/cart-backend/.../controller/ProductController.java` | `ass9/product-service/.../security/OrderClient.java`, `ProductController.java` |
+| Saved lists on the account | `ass8/cart-frontend/src/stores/shopper.js`, `.../cart-backend/.../service/AuthService.java` | `ass9/cart-frontend/src/stores/shopper.js`, `ass9/user-service/.../service/AuthService.java` |
 | Stock check on add-to-cart | `ass8/cart-backend/.../service/CartService.java` | `ass9/cart-service/.../service/CartService.java` |
-| Coupon percentages | `ass8/cart-backend/.../service/CheckoutService.java` | `ass9/order-service/.../service/CheckoutService.java` (`COUPONS`) |
+| Coupon percentages | `ass8/cart-backend/.../service/CheckoutService.java` | `ass9/order-service/.../service/CheckoutService.java` |
 | Admin product table | `ass8/cart-frontend/src/views/Admin.vue` | `ass9/cart-frontend/src/views/Admin.vue` |
 | Developer console | `ass8/cart-frontend/src/views/Developer.vue` (one log stream) | `ass9/cart-frontend/src/views/Developer.vue`, `components/ServiceMap.vue` |
+| API gateway (ass9 only) | none | `ass9/api-gateway/src/main/java/com/ssn/apigateway/GatewayController.java` |
 | Demo shopper list on login | `ass8/cart-frontend/src/views/Login.vue` | `ass9/cart-frontend/src/views/Login.vue` |
 
 ---

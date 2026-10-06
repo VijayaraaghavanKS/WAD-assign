@@ -1,6 +1,7 @@
 package com.ssn.cartbackend.controller;
 
 import com.ssn.cartbackend.model.CheckoutRequest;
+import com.ssn.cartbackend.model.Coupon;
 import com.ssn.cartbackend.model.Order;
 import com.ssn.cartbackend.model.User;
 import com.ssn.cartbackend.service.AuthService;
@@ -56,5 +57,25 @@ public class OrderController {
                            @PathVariable String id, @RequestBody Map<String, String> body) {
         auth.requireAdmin(authorization);
         return checkout.setStatus(id, body.get("status"));
+    }
+
+    // Public: the cart and the Offers page read the list.
+    @GetMapping("/coupons")
+    public List<Coupon> coupons() {
+        return checkout.listCoupons();
+    }
+
+    @PostMapping("/coupons")
+    public Coupon addCoupon(@RequestHeader(value = "Authorization", required = false) String authorization,
+                            @RequestBody Coupon body) {
+        auth.requireAdmin(authorization);
+        return checkout.saveCoupon(body.getCode(), body.getPercent());
+    }
+
+    @DeleteMapping("/coupons/{code}")
+    public void deleteCoupon(@RequestHeader(value = "Authorization", required = false) String authorization,
+                             @PathVariable String code) {
+        auth.requireAdmin(authorization);
+        checkout.deleteCoupon(code);
     }
 }

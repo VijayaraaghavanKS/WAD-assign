@@ -4,9 +4,11 @@ import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
 import { ShoppingCart, ShoppingBag, LogOut, Package, ShieldCheck, Activity, Tag } from 'lucide-vue-next'
 import { useCartStore } from './stores/cart'
 import { useAuthStore } from './stores/auth'
+import { useShopperStore } from './stores/shopper'
 
 const cart = useCartStore()
 const auth = useAuthStore()
+const shopper = useShopperStore()
 const router = useRouter()
 const route = useRoute()
 const floatOpen = ref(false)
@@ -20,6 +22,8 @@ const showFloatingCart = computed(() => isShopper.value && route.path !== '/cart
 watch(() => auth.isLoggedIn, async (loggedIn) => {
   if (loggedIn) await cart.mergeGuest().catch(() => {})
   cart.load()
+  if (loggedIn) await shopper.sync().catch(() => {})
+  else shopper.reset()
 }, { immediate: true })
 
 // Links each role can see. Shop and Offers are open to everyone; the rest need a role.

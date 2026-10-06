@@ -5,6 +5,8 @@ const USER_API = 'http://localhost:8085/api'
 const PRODUCT_API = 'http://localhost:8083/api'
 const CART_API = 'http://localhost:8084/api'
 const ORDER_API = 'http://localhost:8086/api'
+// The browser's one address. The gateway forwards each call to the service that owns the path.
+const GATEWAY = 'http://localhost:8080/api'
 
 const SESSION_KEY = 'shopcart-session'
 
@@ -39,28 +41,36 @@ function safeParse(text) {
 const json = (body) => JSON.stringify(body)
 
 export const api = {
-  login: (username, password) => request(USER_API, '/auth/login', { method: 'POST', body: json({ username, password }) }),
-  register: (username, password) => request(USER_API, '/auth/register', { method: 'POST', body: json({ username, password }) }),
+  login: (username, password) => request(GATEWAY, '/auth/login', { method: 'POST', body: json({ username, password }) }),
+  register: (username, password) => request(GATEWAY, '/auth/register', { method: 'POST', body: json({ username, password }) }),
 
-  getProduct: (id) => request(PRODUCT_API, `/products/${id}`),
-  addReview: (id, review) => request(PRODUCT_API, `/products/${id}/reviews`, { method: 'POST', body: json(review) }),
-  getProducts: (category) => request(PRODUCT_API, `/products${category ? `?category=${encodeURIComponent(category)}` : ''}`),
-  createProduct: (product) => request(PRODUCT_API, '/products', { method: 'POST', body: json(product) }),
-  updateProduct: (id, product) => request(PRODUCT_API, `/products/${id}`, { method: 'PUT', body: json(product) }),
-  deleteProduct: (id) => request(PRODUCT_API, `/products/${id}`, { method: 'DELETE' }),
+  getProduct: (id) => request(GATEWAY, `/products/${id}`),
+  addReview: (id, review) => request(GATEWAY, `/products/${id}/reviews`, { method: 'POST', body: json(review) }),
+  getProducts: (category) => request(GATEWAY, `/products${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+  createProduct: (product) => request(GATEWAY, '/products', { method: 'POST', body: json(product) }),
+  updateProduct: (id, product) => request(GATEWAY, `/products/${id}`, { method: 'PUT', body: json(product) }),
+  deleteProduct: (id) => request(GATEWAY, `/products/${id}`, { method: 'DELETE' }),
 
-  getCart: () => request(CART_API, '/cart'),
+  getCart: () => request(GATEWAY, '/cart'),
   // variant is { size, colour }; both are optional. Each size and colour is its own cart line.
-  addToCart: (productId, variant) => request(CART_API, `/cart/add/${productId}`, { method: 'POST', body: variant ? json(variant) : undefined }),
-  updateQuantity: (cartItemId, quantity) => request(CART_API, `/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
-  removeItem: (cartItemId) => request(CART_API, `/cart/${cartItemId}`, { method: 'DELETE' }),
+  addToCart: (productId, variant) => request(GATEWAY, `/cart/add/${productId}`, { method: 'POST', body: variant ? json(variant) : undefined }),
+  updateQuantity: (cartItemId, quantity) => request(GATEWAY, `/cart/${cartItemId}`, { method: 'PUT', body: json({ quantity }) }),
+  removeItem: (cartItemId) => request(GATEWAY, `/cart/${cartItemId}`, { method: 'DELETE' }),
 
   // body: { coupon, address: { name, phone, line1, city, state, pin }, payment: 'UPI' | 'CARD' | 'COD' }
-  placeOrder: (body) => request(ORDER_API, '/orders', { method: 'POST', body: json(body) }),
-  getOrders: () => request(ORDER_API, '/orders'),
-  getAllOrders: () => request(ORDER_API, '/orders/all'),
-  getOrderStats: () => request(ORDER_API, '/orders/stats'),
-  setOrderStatus: (id, status) => request(ORDER_API, `/orders/${id}/status`, { method: 'PUT', body: json({ status }) }),
+  placeOrder: (body) => request(GATEWAY, '/orders', { method: 'POST', body: json(body) }),
+  getOrders: () => request(GATEWAY, '/orders'),
+  getAllOrders: () => request(GATEWAY, '/orders/all'),
+  getOrderStats: () => request(GATEWAY, '/orders/stats'),
+  setOrderStatus: (id, status) => request(GATEWAY, `/orders/${id}/status`, { method: 'PUT', body: json({ status }) }),
+
+  getCoupons: () => request(GATEWAY, '/orders/coupons'),
+  addCoupon: (code, percent) => request(GATEWAY, '/orders/coupons', { method: 'POST', body: json({ code, percent }) }),
+  deleteCoupon: (code) => request(GATEWAY, `/orders/coupons/${encodeURIComponent(code)}`, { method: 'DELETE' }),
+
+  // Shopper preferences (wishlist, compare, recently viewed, address) kept on the account.
+  getPrefs: () => request(GATEWAY, '/auth/prefs'),
+  savePrefs: (prefs) => request(GATEWAY, '/auth/prefs', { method: 'PUT', body: json(prefs) }),
 
   getUserServiceLogs: () => request(USER_API, '/dev/logs'),
   getUserServiceMetrics: () => request(USER_API, '/dev/metrics'),
@@ -93,5 +103,11 @@ export const ENDPOINTS = [
   { service: 'Product Service :8083', method: 'GET', path: '/api/products/{id}', desc: 'One product with sizes, colours, specs and reviews' },
   { service: 'Product Service :8083', method: 'POST', path: '/api/products/{id}/reviews', desc: 'Post a review (logged-in shopper)' },
   { service: 'Order Service :8086', method: 'GET', path: '/api/orders/stats', desc: 'Sales totals and chart data (admin only)' },
+  { service: 'API Gateway :8080', method: 'ANY', path: '/api/*', desc: 'Forwards each call to the service that owns the path' },
+  { service: 'Order Service :8086', method: 'GET', path: '/api/orders/coupons', desc: 'Coupon codes the shop accepts' },
+  { service: 'Order Service :8086', method: 'POST', path: '/api/orders/coupons', desc: 'Add a coupon code (admin only)' },
+  { service: 'Order Service :8086', method: 'DELETE', path: '/api/orders/coupons/{code}', desc: 'Remove a coupon code (admin only)' },
+  { service: 'User Service :8085', method: 'GET', path: '/api/auth/prefs', desc: 'Shopper wishlist, compare, recently viewed and address' },
+  { service: 'User Service :8085', method: 'PUT', path: '/api/auth/prefs', desc: 'Save those shopper preferences' },
   { service: 'Order Service :8086', method: 'PUT', path: '/api/orders/{id}/status', desc: 'Move an order PLACED, PACKED, SHIPPED, DELIVERED (admin only)' },
 ]

@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia'
+import { api } from '../api/client'
+import { useAuthStore } from './auth'
 
 const KEY = 'shopcart-shopper'
 const MAX_COMPARE = 3
@@ -38,24 +40,46 @@ export const useShopperStore = defineStore('shopper', {
       this.compare = []
       save(this)
     },
+
+    // Signed in: the account's copy wins when it has one. Otherwise this browser's copy is uploaded.
+    async sync() {
+      const remote = await api.getPrefs()
+      if (remote && Object.keys(remote).length) Object.assign(this, pick(remote))
+      else await api.savePrefs(pick(this))
+      save(this)
+    },
+
+    // Signed out: back to this browser's own copy.
+    reset() {
+      Object.assign(this, read())
+    },
   },
 })
 
 export const COMPARE_LIMIT = MAX_COMPARE
 
+const pick = ({ wishlist, recent, compare, address }) => ({
+  wishlist: wishlist ?? [],
+  recent: recent ?? [],
+  compare: compare ?? [],
+  address: address ?? null,
+})
+
 function read() {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY)) ?? {}
-    return { wishlist: saved.wishlist ?? [], recent: saved.recent ?? [], compare: saved.compare ?? [], address: saved.address ?? null }
+    return pick(JSON.parse(localStorage.getItem(KEY)) ?? {})
   } catch {
-    return { wishlist: [], recent: [], compare: [], address: null }
+    return pick({})
   }
 }
 
+// Writes this browser's copy, and the account's copy when someone is signed in.
 function save(state) {
+  const data = pick(state)
   try {
-    localStorage.setItem(KEY, JSON.stringify({ wishlist: state.wishlist, recent: state.recent, compare: state.compare, address: state.address }))
+    localStorage.setItem(KEY, JSON.stringify(data))
   } catch {
     // Private windows can block storage. The features still work for this visit.
   }
+  if (useAuthStore().isLoggedIn) api.savePrefs(data).catch(() => {})
 }

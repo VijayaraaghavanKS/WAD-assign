@@ -1,5 +1,7 @@
 package com.ssn.userservice.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import com.ssn.userservice.model.User;
 import com.ssn.userservice.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -35,7 +37,7 @@ public class AuthService {
         if (repository.findByUsername(username).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
         }
-        return repository.save(new User(null, username, hash(password), "USER", null));
+        return repository.save(new User(null, username, hash(password), "USER", null, new HashMap<>()));
     }
 
     // Returns a fresh random token. Every service checks it by calling GET /api/auth/me.
@@ -50,5 +52,16 @@ public class AuthService {
     public User findByToken(String token) {
         return repository.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not logged in"));
+    }
+
+    // Returns the preferences saved on the account (empty for accounts that never saved any).
+    public Map<String, Object> prefsOf(User user) {
+        return user.getPrefs() == null ? Map.of() : user.getPrefs();
+    }
+
+    public Map<String, Object> savePrefs(User user, Map<String, Object> prefs) {
+        user.setPrefs(new HashMap<>(prefs));
+        repository.save(user);
+        return user.getPrefs();
     }
 }

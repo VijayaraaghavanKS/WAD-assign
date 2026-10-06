@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { ShoppingCart, Minus, Plus, Trash2, Heart, Truck, Tag, X, ArrowLeft } from 'lucide-vue-next'
 import { api } from '../api/client'
@@ -15,7 +15,8 @@ const router = useRouter()
 const route = useRoute()
 
 // Same codes and rules the Order Service uses. Used here only to preview the totals.
-const COUPONS = { SAVE10: 10, WELCOME20: 20 }
+// Code -> percent off, loaded from the Order Service so the preview matches checkout.
+const COUPONS = ref({})
 const FREE_DELIVERY_AT = 5000
 const DELIVERY_FEE = 99
 const GST_RATE = 18
@@ -31,7 +32,7 @@ const payment = ref('UPI')
 const address = reactive({ name: '', phone: '', line1: '', city: '', state: '', pin: '' })
 const addressError = ref('')
 
-const couponSaving = computed(() => Math.round(cart.total * (COUPONS[appliedCoupon.value] ?? 0) / 100))
+const couponSaving = computed(() => Math.round(cart.total * (COUPONS.value[appliedCoupon.value] ?? 0) / 100))
 const afterCoupon = computed(() => cart.total - couponSaving.value)
 const deliveryFee = computed(() => (afterCoupon.value >= FREE_DELIVERY_AT ? 0 : DELIVERY_FEE))
 const payable = computed(() => afterCoupon.value + deliveryFee.value)
@@ -52,15 +53,19 @@ async function run(change) {
 function applyCoupon() {
   const code = couponInput.value.trim().toUpperCase()
   couponError.value = ''
-  if (!COUPONS[code]) return (couponError.value = 'That code is not valid')
+  if (!COUPONS.value[code]) return (couponError.value = 'That code is not valid')
   appliedCoupon.value = code
 }
 
-// A code from the Offers page arrives as ?coupon=CODE and is applied straight away.
-if (route.query.coupon) {
-  couponInput.value = String(route.query.coupon)
-  applyCoupon()
-}
+// A code from the Offers page arrives as ?coupon=CODE and is applied once the list has loaded.
+onMounted(async () => {
+  const list = await api.getCoupons().catch(() => [])
+  COUPONS.value = Object.fromEntries(list.map((c) => [c.code, c.percent]))
+  if (route.query.coupon) {
+    couponInput.value = String(route.query.coupon)
+    applyCoupon()
+  }
+})
 
 // Checkout is the only step that needs an account. Guests are sent to sign in and come back here.
 function openCheckout() {

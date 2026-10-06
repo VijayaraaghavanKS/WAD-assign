@@ -1,5 +1,6 @@
 package com.ssn.userservice;
 
+import java.util.HashMap;
 import com.ssn.userservice.model.User;
 import com.ssn.userservice.repository.UserRepository;
 import com.ssn.userservice.service.AuthService;
@@ -20,9 +21,9 @@ public class UserServiceApplication {
     public CommandLineRunner seedUsers(UserRepository repository, AuthService auth) {
         return args -> {
             if (repository.count() == 0) {
-                repository.save(new User(null, "shopper", auth.hash("demo123"), "USER", null));
-                repository.save(new User(null, "admin", auth.hash("demo123"), "ADMIN", null));
-                repository.save(new User(null, "developer", auth.hash("demo123"), "DEVELOPER", null));
+                repository.save(new User(null, "shopper", auth.hash("demo123"), "USER", null, new HashMap<>()));
+                repository.save(new User(null, "admin", auth.hash("demo123"), "ADMIN", null, new HashMap<>()));
+                repository.save(new User(null, "developer", auth.hash("demo123"), "DEVELOPER", null, new HashMap<>()));
             }
         };
     }

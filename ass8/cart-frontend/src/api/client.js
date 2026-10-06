@@ -58,6 +58,14 @@ export const api = {
   getOrderStats: () => request('/orders/stats'),
   setOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: 'PUT', body: json({ status }) }),
 
+  getCoupons: () => request('/orders/coupons'),
+  addCoupon: (code, percent) => request('/orders/coupons', { method: 'POST', body: json({ code, percent }) }),
+  deleteCoupon: (code) => request(`/orders/coupons/${encodeURIComponent(code)}`, { method: 'DELETE' }),
+
+  // Shopper preferences (wishlist, compare, recently viewed, address) kept on the account.
+  getPrefs: () => request('/auth/prefs'),
+  savePrefs: (prefs) => request('/auth/prefs', { method: 'PUT', body: json(prefs) }),
+
   getLogs: () => request('/dev/logs'),
   getMetrics: () => request('/dev/metrics'),
 }

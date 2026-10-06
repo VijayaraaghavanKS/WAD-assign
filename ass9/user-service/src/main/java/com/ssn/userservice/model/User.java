@@ -1,5 +1,7 @@
 package com.ssn.userservice.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,4 +23,7 @@ public class User {
 
     // Session token issued at login. Null while logged out.
     private String token;
+
+    // Shopper preferences: wishlist, compare, recently viewed and address. Set by PUT /api/auth/prefs.
+    private Map<String, Object> prefs;
 }

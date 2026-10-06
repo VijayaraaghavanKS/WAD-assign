@@ -194,7 +194,7 @@ watch(() => route.params.id, load)
           <span class="rating"><Star v-for="n in 5" :key="n" :size="13" class="star" :class="{ off: n > r.rating }" /></span>
           <strong>{{ r.title }}</strong>
         </div>
-        <p class="meta">{{ r.username }} &middot; {{ new Date(r.postedAt).toLocaleDateString() }} &middot; Verified purchase</p>
+        <p class="meta">{{ r.username }} &middot; {{ new Date(r.postedAt).toLocaleDateString() }}<span v-if="r.verified" class="verified"> &middot; Verified purchase</span></p>
         <p>{{ r.body }}</p>
       </article>
     </section>
@@ -268,6 +268,7 @@ watch(() => route.params.id, load)
 .review { border-top: 1px solid var(--border); padding: 14px 0; }
 .review-head { display: flex; gap: 10px; align-items: center; }
 .review .meta { font-size: 0.8rem; color: var(--ink-soft); margin: 4px 0 6px; }
+.verified { color: var(--olive); font-weight: 600; }
 .review p { margin: 0; }
 
 .related { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }

@@ -9,6 +9,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import com.ssn.productservice.security.AuthClient;
+import com.ssn.productservice.security.OrderClient;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
@@ -29,6 +30,9 @@ class ProductControllerTest {
 
     @MockitoBean
     private ProductRepository repository;
+
+    @MockitoBean
+    private OrderClient orders;
 
     @MockitoBean
     private AuthClient authClient;

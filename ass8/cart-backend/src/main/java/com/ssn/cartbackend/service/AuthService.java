@@ -1,5 +1,7 @@
 package com.ssn.cartbackend.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import com.ssn.cartbackend.model.User;
 import com.ssn.cartbackend.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -35,7 +37,7 @@ public class AuthService {
         if (users.findByUsername(username).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
         }
-        return users.save(new User(null, username, hash(password), "USER", null));
+        return users.save(new User(null, username, hash(password), "USER", null, new HashMap<>()));
     }
 
     public User login(String username, String password) {
@@ -62,5 +64,16 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admins only");
         }
         return user;
+    }
+
+    // Returns the preferences saved on the account (empty for accounts that never saved any).
+    public Map<String, Object> prefsOf(User user) {
+        return user.getPrefs() == null ? Map.of() : user.getPrefs();
+    }
+
+    public Map<String, Object> savePrefs(User user, Map<String, Object> prefs) {
+        user.setPrefs(new HashMap<>(prefs));
+        users.save(user);
+        return user.getPrefs();
     }
 }

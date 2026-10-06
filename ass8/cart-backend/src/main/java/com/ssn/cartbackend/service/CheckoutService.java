@@ -2,6 +2,7 @@ package com.ssn.cartbackend.service;
 
 import com.ssn.cartbackend.model.*;
 import com.ssn.cartbackend.repository.CartRepository;
+import com.ssn.cartbackend.repository.CouponRepository;
 import com.ssn.cartbackend.repository.OrderRepository;
 import com.ssn.cartbackend.repository.ProductRepository;
 import org.springframework.data.domain.Sort;
@@ -18,8 +19,6 @@ import java.util.stream.Collectors;
 @Service
 public class CheckoutService {
 
-    // Coupon codes and their percentage off. Same codes the microservice version accepts.
-    static final Map<String, Integer> COUPONS = Map.of("SAVE10", 10, "WELCOME20", 20);
     static final List<String> STATUSES = List.of("PLACED", "PACKED", "SHIPPED", "DELIVERED");
     static final List<String> PAYMENTS = List.of("UPI", "CARD", "COD");
     static final int FREE_DELIVERY_AT = 5000;
@@ -29,11 +28,13 @@ public class CheckoutService {
     private final CartRepository carts;
     private final ProductRepository products;
     private final OrderRepository orders;
+    private final CouponRepository coupons;
 
-    public CheckoutService(CartRepository carts, ProductRepository products, OrderRepository orders) {
+    public CheckoutService(CartRepository carts, ProductRepository products, OrderRepository orders, CouponRepository coupons) {
         this.carts = carts;
         this.products = products;
         this.orders = orders;
+        this.coupons = coupons;
     }
 
     // Turns the user's cart into an order. If one line is out of stock, the lines
@@ -57,7 +58,7 @@ public class CheckoutService {
         String code = null;
         if (request.coupon() != null && !request.coupon().isBlank()) {
             code = request.coupon().trim().toUpperCase();
-            percent = COUPONS.get(code);
+            percent = coupons.findById(code).map(Coupon::getPercent).orElse(null);
             if (percent == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "That coupon code is not valid");
             }
@@ -159,6 +160,23 @@ public class CheckoutService {
         result.put("lastFourteenDays", days);
         result.put("topProducts", top);
         return result;
+    }
+
+    // Coupons are kept in MongoDB so the admin can add or remove them.
+    public List<Coupon> listCoupons() {
+        return coupons.findAll();
+    }
+
+    public Coupon saveCoupon(String code, int percent) {
+        String key = code == null ? "" : code.trim().toUpperCase();
+        if (key.isEmpty() || percent < 1 || percent > 90) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Give a code and a percentage from 1 to 90");
+        }
+        return coupons.save(new Coupon(key, percent));
+    }
+
+    public void deleteCoupon(String code) {
+        coupons.deleteById(code);
     }
 
     private static boolean blank(String s) {

@@ -1,9 +1,11 @@
 package com.ssn.orderservice.service;
 
 import com.ssn.orderservice.model.Address;
+import com.ssn.orderservice.model.Coupon;
 import com.ssn.orderservice.model.CheckoutRequest;
 import com.ssn.orderservice.model.Order;
 import com.ssn.orderservice.model.OrderLine;
+import com.ssn.orderservice.repository.CouponRepository;
 import com.ssn.orderservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -24,8 +26,6 @@ import java.util.stream.Collectors;
 @Service
 public class CheckoutService {
 
-    // Coupon codes and their percentage off.
-    static final Map<String, Integer> COUPONS = Map.of("SAVE10", 10, "WELCOME20", 20);
     static final List<String> STATUSES = List.of("PLACED", "PACKED", "SHIPPED", "DELIVERED");
     static final List<String> PAYMENTS = List.of("UPI", "CARD", "COD");
     static final int FREE_DELIVERY_AT = 5000;
@@ -34,6 +34,7 @@ public class CheckoutService {
 
     private final OrderRepository orders;
     private final RestTemplate rest;
+    private final CouponRepository coupons;
 
     @Value("${cart.service.url}")
     private String cartUrl;
@@ -41,9 +42,10 @@ public class CheckoutService {
     @Value("${product.service.url}")
     private String productUrl;
 
-    public CheckoutService(OrderRepository orders, RestTemplate rest) {
+    public CheckoutService(OrderRepository orders, RestTemplate rest, CouponRepository coupons) {
         this.orders = orders;
         this.rest = rest;
+        this.coupons = coupons;
     }
 
     // Turns the caller's cart into an order. Stock is reserved one line at a time;
@@ -67,7 +69,7 @@ public class CheckoutService {
         String code = null;
         if (request.coupon() != null && !request.coupon().isBlank()) {
             code = request.coupon().trim().toUpperCase();
-            percent = COUPONS.get(code);
+            percent = coupons.findById(code).map(Coupon::getPercent).orElse(null);
             if (percent == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "That coupon code is not valid");
             }
@@ -108,6 +110,23 @@ public class CheckoutService {
         Order saved = orders.save(order);
         clearCart(authorization);
         return saved;
+    }
+
+    // Coupons are kept in MongoDB so the admin can add or remove them.
+    public List<Coupon> listCoupons() {
+        return coupons.findAll();
+    }
+
+    public Coupon saveCoupon(String code, int percent) {
+        String key = code == null ? "" : code.trim().toUpperCase();
+        if (key.isEmpty() || percent < 1 || percent > 90) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Give a code and a percentage from 1 to 90");
+        }
+        return coupons.save(new Coupon(key, percent));
+    }
+
+    public void deleteCoupon(String code) {
+        coupons.deleteById(code);
     }
 
     private static boolean blank(String s) {

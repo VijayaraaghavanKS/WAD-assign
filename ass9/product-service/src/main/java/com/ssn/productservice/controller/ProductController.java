@@ -4,6 +4,7 @@ import com.ssn.productservice.model.Product;
 import com.ssn.productservice.model.Review;
 import com.ssn.productservice.repository.ProductRepository;
 import com.ssn.productservice.security.AuthClient;
+import com.ssn.productservice.security.OrderClient;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,10 +23,12 @@ public class ProductController {
 
     private final ProductRepository repository;
     private final AuthClient auth;
+    private final OrderClient orders;
 
-    public ProductController(ProductRepository repository, AuthClient auth) {
+    public ProductController(ProductRepository repository, AuthClient auth, OrderClient orders) {
         this.repository = repository;
         this.auth = auth;
+        this.orders = orders;
     }
 
     @GetMapping
@@ -67,7 +70,6 @@ public class ProductController {
         return Map.of("message", "Product deleted");
     }
 
-    // Internal: Order Service calls this at checkout. Fails with 409 if stock ran out.
     // Any logged-in shopper can review a product. One review is added per call.
     @PostMapping("/{id}/reviews")
     public Product addReview(@RequestHeader(value = "Authorization", required = false) String authorization,
@@ -81,11 +83,13 @@ public class ProductController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be 1 to 5");
         }
         Product product = getProduct(id);
+        boolean verified = orders.hasBought(authorization, id);
         product.getReviews().add(0, new Review(user.get("username"), rating,
-                String.valueOf(body.getOrDefault("title", "")), String.valueOf(body.getOrDefault("body", "")), Instant.now()));
+                String.valueOf(body.getOrDefault("title", "")), String.valueOf(body.getOrDefault("body", "")), Instant.now(), verified));
         return repository.save(product);
     }
 
+    // Internal: Order Service calls this at checkout. Fails with 409 if stock ran out.
     @PostMapping("/{id}/reserve")
     public Product reserve(@PathVariable String id, @RequestBody Map<String, Integer> body) {
         return changeStock(id, -body.get("quantity"));

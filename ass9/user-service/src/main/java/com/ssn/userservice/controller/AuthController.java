@@ -38,4 +38,16 @@ public class AuthController {
         User user = auth.findByToken(authorization.replaceFirst("^Bearer ", ""));
         return Map.of("id", user.getId(), "username", user.getUsername(), "role", user.getRole());
     }
+
+    // Shopper preferences (wishlist, compare, recently viewed, address) kept on the account.
+    @GetMapping("/prefs")
+    public Map<String, Object> prefs(@RequestHeader("Authorization") String authorization) {
+        return auth.prefsOf(auth.findByToken(authorization.replaceFirst("^Bearer ", "")));
+    }
+
+    @PutMapping("/prefs")
+    public Map<String, Object> savePrefs(@RequestHeader("Authorization") String authorization,
+                                         @RequestBody Map<String, Object> body) {
+        return auth.savePrefs(auth.findByToken(authorization.replaceFirst("^Bearer ", "")), body);
+    }
 }

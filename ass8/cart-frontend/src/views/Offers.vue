@@ -1,13 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { Copy, Check, Ticket, Truck, Wallet, ArrowRight } from 'lucide-vue-next'
+import { api } from '../api/client'
 
-// Only codes the Order Service really accepts. Each one shows its terms in plain words.
-const coupons = [
-  { code: 'SAVE10', percent: 10, title: '10% off your order', terms: ['Works on any order', 'Taken off the subtotal, before delivery and GST'] },
-  { code: 'WELCOME20', percent: 20, title: '20% off your order', terms: ['Works on any order', 'Taken off the subtotal, before delivery and GST'] },
-]
+// The codes the Order Service accepts right now, so this page always matches checkout.
+const coupons = ref([])
+onMounted(async () => {
+  const list = await api.getCoupons().catch(() => [])
+  coupons.value = list.map((c) => ({
+    code: c.code,
+    percent: c.percent,
+    title: `${c.percent}% off your order`,
+    terms: ['Works on any order', 'Taken off the subtotal, before delivery and GST'],
+  }))
+})
 
 // Always-on terms, so shoppers know what they pay before checkout.
 const standing = [

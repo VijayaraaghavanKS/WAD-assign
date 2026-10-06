@@ -1,5 +1,6 @@
 package com.ssn.cartbackend;
 
+import java.util.HashMap;
 import com.ssn.cartbackend.model.Product;
 import com.ssn.cartbackend.model.User;
 import com.ssn.cartbackend.repository.ProductRepository;
@@ -22,9 +23,9 @@ public class CartBackendApplication {
 	public CommandLineRunner seedData(ProductRepository products, UserRepository users, AuthService auth) {
 		return args -> {
 			if (users.count() == 0) {
-				users.save(new User(null, "shopper", auth.hash("demo123"), "USER", null));
-				users.save(new User(null, "admin", auth.hash("demo123"), "ADMIN", null));
-				users.save(new User(null, "developer", auth.hash("demo123"), "DEVELOPER", null));
+				users.save(new User(null, "shopper", auth.hash("demo123"), "USER", null, new HashMap<>()));
+				users.save(new User(null, "admin", auth.hash("demo123"), "ADMIN", null, new HashMap<>()));
+				users.save(new User(null, "developer", auth.hash("demo123"), "DEVELOPER", null, new HashMap<>()));
 			}
 			if (products.count() == 0) {
 				products.save(new Product(null, "Laptop", 55000, 14, "Electronics", 15));

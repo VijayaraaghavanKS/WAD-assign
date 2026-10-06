@@ -9,6 +9,8 @@ const LOW_STOCK = 5
 
 const products = ref([])
 const orders = ref([])
+const coupons = ref([])
+const newCoupon = reactive({ code: '', percent: null })
 const stats = ref(null)
 const error = ref('')
 const newProduct = reactive({ name: '', price: null, quantity: null, category: '', discountPercent: 0 })
@@ -54,6 +56,7 @@ const chartBars = computed(() =>
 
 async function refresh() {
   products.value = await api.getProducts()
+  coupons.value = await api.getCoupons().catch(() => [])
   try {
     ;[orders.value, stats.value] = await Promise.all([api.getAllOrders(), api.getOrderStats()])
   } catch (e) {
@@ -68,6 +71,22 @@ async function setStatus(order, status) {
   } catch (e) {
     error.value = e.message
   }
+}
+
+async function addCoupon() {
+  if (!newCoupon.code || !newCoupon.percent) return
+  try {
+    await api.addCoupon(newCoupon.code, Number(newCoupon.percent))
+    Object.assign(newCoupon, { code: '', percent: null })
+    coupons.value = await api.getCoupons()
+  } catch (e) {
+    error.value = e.message
+  }
+}
+
+async function removeCoupon(code) {
+  await api.deleteCoupon(code)
+  coupons.value = await api.getCoupons()
 }
 
 async function addProduct() {
@@ -192,6 +211,21 @@ onMounted(refresh)
     </section>
 
     <section class="panel">
+      <h2>Coupon codes</h2>
+      <form class="coupon-form" @submit.prevent="addCoupon">
+        <input v-model="newCoupon.code" placeholder="Code, e.g. DIWALI15" aria-label="Coupon code" />
+        <input v-model.number="newCoupon.percent" type="number" min="1" max="90" placeholder="% off" aria-label="Percent off" />
+        <button class="btn btn-primary" type="submit">Add code</button>
+      </form>
+      <ul class="low-list">
+        <li v-for="c in coupons" :key="c.code">
+          <span><code>{{ c.code }}</code> &middot; {{ c.percent }}% off</span>
+          <button class="btn btn-outline" :aria-label="`Remove ${c.code}`" @click="removeCoupon(c.code)"><Trash2 :size="15" /></button>
+        </li>
+      </ul>
+    </section>
+
+    <section class="panel">
       <h2><Boxes :size="17" /> Products, stock and performance</h2>
       <form class="add-form" @submit.prevent="addProduct">
         <input v-model="newProduct.name" placeholder="Product name" required />
@@ -262,6 +296,8 @@ onMounted(refresh)
 </template>
 
 <style scoped>
+.coupon-form { display: flex; gap: 8px; margin-bottom: 10px; }
+.coupon-form input { flex: 1; min-width: 0; padding: 8px; }
 .admin-head { margin-bottom: 16px; }
 .admin-head h1 { display: flex; align-items: center; gap: 9px; margin: 0 0 4px; font-size: 1.6rem; }
 .subtitle { color: var(--ink-soft); font-size: 0.9rem; }

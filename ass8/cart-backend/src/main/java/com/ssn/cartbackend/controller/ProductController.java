@@ -3,6 +3,7 @@ package com.ssn.cartbackend.controller;
 import com.ssn.cartbackend.model.Product;
 import com.ssn.cartbackend.model.Review;
 import com.ssn.cartbackend.model.User;
+import com.ssn.cartbackend.repository.OrderRepository;
 import com.ssn.cartbackend.repository.ProductRepository;
 import com.ssn.cartbackend.service.AuthService;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,12 @@ public class ProductController {
 
     private final ProductRepository products;
     private final AuthService auth;
+    private final OrderRepository orders;
 
-    public ProductController(ProductRepository products, AuthService auth) {
+    public ProductController(ProductRepository products, AuthService auth, OrderRepository orders) {
         this.products = products;
         this.auth = auth;
+        this.orders = orders;
     }
 
     @GetMapping
@@ -67,8 +70,11 @@ public class ProductController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be 1 to 5");
         }
         Product product = getProduct(id);
+        // Verified when this shopper has an order that contains the product.
+        boolean verified = orders.findByUserIdOrderByPlacedAtDesc(user.getId()).stream()
+                .anyMatch(order -> order.getItems().stream().anyMatch(line -> id.equals(line.productId())));
         product.getReviews().add(0, new Review(user.getUsername(), rating,
-                String.valueOf(body.getOrDefault("title", "")), String.valueOf(body.getOrDefault("body", "")), Instant.now()));
+                String.valueOf(body.getOrDefault("title", "")), String.valueOf(body.getOrDefault("body", "")), Instant.now(), verified));
         return products.save(product);
     }
 
